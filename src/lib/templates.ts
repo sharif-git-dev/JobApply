@@ -15,7 +15,7 @@ export function keywordFit(profile: Profile, job: Job): FitAnalysis {
   const { score, matched, missing } = scoreJob(profile, job);
   const total = matched.length + missing.length;
   const summary = total
-    ? `Your profile covers ${matched.length} of the ${total} skills this posting names. This is a keyword comparison — add an Anthropic key in Settings for a recruiter-style read of the requirements.`
+    ? `Your profile covers ${matched.length} of the ${total} skills this posting names. This is a keyword comparison — add an AI key in Settings for a recruiter-style read of the requirements.`
     : "This posting doesn't name skills the keyword matcher recognises, so the score leans on how close the title is to your background.";
   return {
     score,

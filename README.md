@@ -37,22 +37,24 @@ Everything above works without these. Both are entered on the **Settings** page 
 
 | Key | What it adds | Cost |
 | --- | --- | --- |
-| Anthropic API key | Cover letters, resume rewrites, fit analysis and form answers written by Claude instead of the built-in templates, and more accurate resume reading | Pay-as-you-go. The minimum credit purchase is $5; with auto-reload left off, that is the most it can cost |
+| AI key — DeepSeek (default) or Anthropic | Cover letters, resume rewrites, fit analysis and form answers written by an AI model instead of the built-in templates, and more accurate resume reading | Pay-as-you-go and prepaid: with any auto top-up left off, it cannot cost more than the balance you load |
 | Adzuna app ID + key | Local and on-site listings with real location search (the built-in boards lean remote) | Free |
 
 ### Keeping AI spend under control
 
 JobApply estimates the cost of every AI request from its token counts and keeps a running total. Before each request it assumes the worst case and refuses to send anything that could take the total past your cap (default **$5**, adjustable in Settings). The model is also your choice:
 
-| Model | Roughly, per fully tailored application |
-| --- | --- |
-| Claude Opus 5.5 (default) | 15–25¢ |
-| Claude Sonnet 5.5 | 8–12¢ |
-| Claude Haiku 5.5 | under 1¢ |
+| Model | Provider | Roughly, per fully tailored application |
+| --- | --- | --- |
+| DeepSeek Flash (default) | DeepSeek | 1–2¢ |
+| DeepSeek V4 Pro | DeepSeek | 4–6¢ |
+| Claude Haiku 5.5 | Anthropic | under 1¢ |
+| Claude Sonnet 5.5 | Anthropic | 8–12¢ |
+| Claude Opus 5.5 | Anthropic | 15–25¢ |
 
-The total shown in Settings is an estimate; the Anthropic console has the exact figure.
+The model you pick decides which provider's key is needed. DeepSeek figures use its peak-hour rates; off-peak is half. The total shown in Settings is an estimate; the provider's account page has the exact figure.
 
-You can also supply the key as an `ANTHROPIC_API_KEY` environment variable instead of typing it into Settings.
+You can also supply a key as a `DEEPSEEK_API_KEY` or `ANTHROPIC_API_KEY` environment variable instead of typing it into Settings.
 
 ## The form-filling extension
 
@@ -69,7 +71,7 @@ To see it work without a real application, open <http://localhost:3000/autofill-
 - Your resume, profile, applications, and keys are plain JSON files in `data/`. That folder is git-ignored and never leaves your machine.
 - The server only accepts connections from this computer, and rejects requests coming from other websites open in your browser.
 - Job searches send your search terms to the job boards. Importing a link fetches that page.
-- If you turn on AI writing, your profile and the job description are sent to Anthropic to generate the text. Nothing is sent to Anthropic otherwise.
+- If you turn on AI writing, your profile and the job description are sent to the provider of the model you picked (DeepSeek or Anthropic) to generate the text. Nothing is sent to either otherwise.
 
 ## What it deliberately doesn't do
 
@@ -89,7 +91,7 @@ npm run typecheck
 npm run build
 ```
 
-Built with Next.js, TypeScript, Tailwind CSS, and the Anthropic SDK. `unpdf` is pinned to 1.7.0, the last release that runs on Node 20; newer ones need Node 22+.
+Built with Next.js, TypeScript and Tailwind CSS. AI calls go to DeepSeek's chat completions API or, for Claude models, through the Anthropic SDK. `unpdf` is pinned to 1.7.0, the last release that runs on Node 20; newer ones need Node 22+.
 
 ```
 src/app/(app)/        pages: home, profile, jobs, applications, settings
@@ -97,7 +99,7 @@ src/app/print/        printable resume and cover letter
 src/app/api/          route handlers
 src/lib/jobs/         job board sources, search and ranking, link import
 src/lib/resume/       resume text extraction and the key-free parser
-src/lib/ai/           Claude client (budget guard, usage tracking) and prompts
+src/lib/ai/           model list, DeepSeek and Claude clients (budget guard, usage tracking), prompts
 src/lib/match.ts      keyword match scoring
 src/lib/templates.ts  key-free cover letter, fit and resume fallbacks
 src/proxy.ts          localhost-only request guard

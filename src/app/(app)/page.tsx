@@ -52,7 +52,7 @@ export default function Home() {
       title: "Turn on AI writing (optional)",
       body: s.hasApiKey
         ? `${usd(s.spentUsd)} of your ${usd(s.budgetUsd)} cap used`
-        : "Add an Anthropic key for tailored cover letters and answers. Without it you still get search, matching, and templates.",
+        : "Add a DeepSeek (or Anthropic) key for tailored cover letters and answers. Without it you still get search, matching, and templates.",
       href: "/settings",
       cta: s.hasApiKey ? "Settings" : "Add key",
     },

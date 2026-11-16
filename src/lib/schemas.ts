@@ -95,6 +95,7 @@ export const GenerateInput = z.object({
 
 export const SettingsPatch = z
   .object({
+    deepseekApiKey: text(300),
     anthropicApiKey: text(300),
     model: text(100),
     budgetUsd: z.number().min(0).max(1000),

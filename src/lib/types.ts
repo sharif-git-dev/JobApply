@@ -154,7 +154,9 @@ export interface UsageEntry {
 }
 
 export interface Settings {
+  deepseekApiKey: string;
   anthropicApiKey: string;
+  /** The model decides the provider (see lib/ai/models.ts). */
   model: string;
   /** Hard cap on estimated AI spend. The app refuses AI calls that could cross it. */
   budgetUsd: number;
@@ -168,6 +170,8 @@ export interface Settings {
 
 /** What the browser is allowed to see — never the raw keys. */
 export interface PublicSettings {
+  /** Provider of the selected model; the key fields below describe that provider's key. */
+  provider: "deepseek" | "anthropic";
   hasApiKey: boolean;
   apiKeyHint: string;
   apiKeyFromEnv: boolean;

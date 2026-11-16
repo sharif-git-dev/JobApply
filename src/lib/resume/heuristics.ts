@@ -4,7 +4,7 @@ import type { EducationItem, ExperienceItem, Profile } from "../types";
 /**
  * Key-free resume parsing. It reads the conventions nearly every resume
  * follows (contact block on top, ALL-CAPS-ish section headings, dated roles
- * with bullets). When an Anthropic key is configured the AI parser replaces
+ * with bullets). When an AI key is configured the AI parser replaces
  * this; either way the user reviews the result on the Profile page.
  */
 

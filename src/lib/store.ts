@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { DEFAULT_MODEL } from "./ai/models";
 import { EMPTY_PROFILE, type Application, type Profile, type Settings } from "./types";
 
 /**
@@ -92,8 +93,9 @@ export async function updateApplication(
 // ---- Settings --------------------------------------------------------------
 
 export const DEFAULT_SETTINGS: Settings = {
+  deepseekApiKey: "",
   anthropicApiKey: "",
-  model: "claude-opus-5-5",
+  model: DEFAULT_MODEL,
   budgetUsd: 5,
   spentUsd: 0,
   usage: [],

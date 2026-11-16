@@ -29,7 +29,7 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
 };
 
 function SourceTag({ ai }: { ai: boolean }) {
-  return <Chip tone={ai ? "match" : "neutral"}>{ai ? "Written by Claude" : "Built-in draft"}</Chip>;
+  return <Chip tone={ai ? "match" : "neutral"}>{ai ? "Written by AI" : "Built-in draft"}</Chip>;
 }
 
 function Bullets({ items }: { items: string[] }) {
@@ -246,7 +246,7 @@ export default function ApplicationPage() {
               <Notice className="mb-4">
                 You&apos;re using the built-in drafts.{" "}
                 <Link href="/settings" className="font-medium text-accent hover:underline">
-                  Add an Anthropic key
+                  Add an AI key
                 </Link>{" "}
                 for writing that&apos;s properly tailored to this job.
               </Notice>
@@ -298,7 +298,7 @@ export default function ApplicationPage() {
                     title="Is this one worth applying to?"
                     body={
                       ai
-                        ? "Claude reads the posting against your profile like a recruiter on a first screen: an honest score, what's working for you, and the gaps to be ready for."
+                        ? "The AI reads the posting against your profile like a recruiter on a first screen: an honest score, what's working for you, and the gaps to be ready for."
                         : "Compares the skills this posting names against your profile."
                     }
                     action={
@@ -369,7 +369,7 @@ export default function ApplicationPage() {
                   title="Cover letter"
                   body={
                     ai
-                      ? "Claude writes a letter for this specific job from your real experience — no invented facts, no filler."
+                      ? "The AI writes a letter for this specific job from your real experience — no invented facts, no filler."
                       : "Builds a simple draft from your profile and the skills this job asks for. You'll want to personalize it."
                   }
                   action={
@@ -420,7 +420,7 @@ export default function ApplicationPage() {
                   title="A resume aimed at this job"
                   body={
                     ai
-                      ? "Claude reorders and rewrites your real bullets to speak this posting's language, then gives you a clean one-page layout to save as a PDF. Nothing is invented."
+                      ? "The AI reorders and rewrites your real bullets to speak this posting's language, then gives you a clean one-page layout to save as a PDF. Nothing is invented."
                       : "Puts your most relevant skills and bullets first and gives you a clean layout to save as a PDF."
                   }
                   action={
@@ -448,7 +448,7 @@ export default function ApplicationPage() {
                   <Button type="submit" variant="primary" loading={busy === "answer"} disabled={!ai} className="self-start">
                     {aiLabel("Write answer")}
                   </Button>
-                  {!ai && <p className="text-xs text-muted">This one needs an Anthropic key — there&apos;s no sensible template for open questions.</p>}
+                  {!ai && <p className="text-xs text-muted">This one needs an AI key — there&apos;s no sensible template for open questions.</p>}
                 </form>
                 {[...app.answers].reverse().map((qa, reversed) => {
                   const index = app.answers.length - 1 - reversed;

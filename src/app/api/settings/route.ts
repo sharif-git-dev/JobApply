@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { MODELS, toPublicSettings } from "@/lib/ai/client";
+import { toPublicSettings } from "@/lib/ai/client";
+import { MODELS } from "@/lib/ai/models";
 import { HttpError, body, route } from "@/lib/api";
 import { SettingsPatch } from "@/lib/schemas";
 import { getSettings, saveSettings } from "@/lib/store";
@@ -10,6 +11,7 @@ export const GET = route(async () => NextResponse.json(toPublicSettings(await ge
 export const PUT = route(async (request: Request) => {
   const { resetSpend, ...patch } = await body(request, SettingsPatch);
   if (patch.model && !MODELS[patch.model]) throw new HttpError("Unknown model.");
+  if (patch.deepseekApiKey !== undefined) patch.deepseekApiKey = patch.deepseekApiKey.trim();
   if (patch.anthropicApiKey !== undefined) patch.anthropicApiKey = patch.anthropicApiKey.trim();
   if (patch.adzunaCountry) patch.adzunaCountry = patch.adzunaCountry.toLowerCase();
   if (patch.watchlist) {

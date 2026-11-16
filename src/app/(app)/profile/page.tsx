@@ -74,7 +74,7 @@ export default function ProfilePage() {
               tone: "success",
               text:
                 result.parsedWith === "ai"
-                  ? "Resume read with Claude. Have a quick look below and fix anything that's off."
+                  ? "Resume read with AI. Have a quick look below and fix anything that's off."
                   : "Resume read with the built-in parser. It gets the basics; check the experience section and fix anything it misjudged.",
             },
       );

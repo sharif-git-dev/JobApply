@@ -4,14 +4,10 @@ import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useToast } from "@/components/Toast";
 import { Button, Card, Field, Input, Notice, PageHeader, Select, Spinner } from "@/components/ui";
+import { MODELS, PROVIDERS } from "@/lib/ai/models";
 import { api, usd, useData } from "@/lib/client";
 import type { PublicSettings, WatchlistEntry } from "@/lib/types";
 
-const MODELS = [
-  { id: "claude-opus-5-5", label: "Claude Opus 5.5 — best writing, roughly 15–25¢ per tailored application" },
-  { id: "claude-sonnet-5-5", label: "Claude Sonnet 5.5 — balanced, roughly 8–12¢ per tailored application" },
-  { id: "claude-haiku-5-5", label: "Claude Haiku 5.5 — cheapest, under 1¢ per tailored application" },
-];
 
 function Section({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
   return (
@@ -57,6 +53,8 @@ export default function SettingsPage() {
     }
   }
 
+  const provider = PROVIDERS[s.provider];
+  const keyField = s.provider === "deepseek" ? "deepseekApiKey" : "anthropicApiKey";
   const used = s.budgetUsd > 0 ? Math.min(100, (s.spentUsd / s.budgetUsd) * 100) : 100;
   const az = adzuna ?? { id: s.adzunaAppId, key: "", country: s.adzunaCountry };
 
@@ -69,21 +67,36 @@ export default function SettingsPage() {
           title="AI writing"
           hint={
             <>
-              Tailored cover letters, resume rewrites, fit analysis and application answers use Claude through your own Anthropic account.
-              You pay Anthropic directly for what you use — create a key at{" "}
-              <ExtLink href="https://console.anthropic.com/settings/keys">console.anthropic.com</ExtLink>. Buy the minimum $5 of credit and
-              leave auto-reload off, and it can never cost more than that.
+              Tailored cover letters, resume rewrites, fit analysis and application answers are written by an AI model through your own
+              account with its provider. You pay the provider directly, only for what you use. Both providers are prepaid: load a few
+              dollars, leave any auto top-up off, and it can never cost more than you loaded.
             </>
           }
         >
+          <Field label="Model" hint="Each model needs a key from its own provider. Costs are estimates.">
+            <Select
+              value={s.model}
+              onChange={(e) => {
+                setApiKey("");
+                void save("model", { model: e.target.value }, "Model updated");
+              }}
+            >
+              {Object.entries(MODELS).map(([id, m]) => (
+                <option key={id} value={id}>
+                  {m.label} — {m.blurb}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
           {s.hasApiKey ? (
             <Notice tone="success" className="flex flex-wrap items-center justify-between gap-3">
               <span>
-                Key connected <span className="font-mono">{s.apiKeyHint}</span>
-                {s.apiKeyFromEnv && " (from the ANTHROPIC_API_KEY environment variable)"}
+                {provider.label} key connected <span className="font-mono">{s.apiKeyHint}</span>
+                {s.apiKeyFromEnv && ` (from the ${provider.env} environment variable)`}
               </span>
               {!s.apiKeyFromEnv && (
-                <Button size="sm" variant="danger" loading={saving === "key"} onClick={() => void save("key", { anthropicApiKey: "" }, "Key removed")}>
+                <Button size="sm" variant="danger" loading={saving === "key"} onClick={() => void save("key", { [keyField]: "" }, "Key removed")}>
                   Remove
                 </Button>
               )}
@@ -93,27 +106,26 @@ export default function SettingsPage() {
               className="flex flex-col gap-2 sm:flex-row sm:items-end"
               onSubmit={async (e) => {
                 e.preventDefault();
-                if (await save("key", { anthropicApiKey: apiKey }, "Key saved")) setApiKey("");
+                if (await save("key", { [keyField]: apiKey }, "Key saved")) setApiKey("");
               }}
             >
-              <Field label="Anthropic API key" hint="Stored only in the data folder on this computer." className="flex-1">
-                <Input type="password" required autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-…" />
+              <Field
+                label={`${provider.label} API key`}
+                hint={
+                  <>
+                    Create one at <ExtLink href={provider.keysUrl}>{provider.keysSite}</ExtLink>. Stored only in the data folder on this
+                    computer.
+                  </>
+                }
+                className="flex-1"
+              >
+                <Input type="password" required autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder={provider.placeholder} />
               </Field>
               <Button type="submit" variant="primary" loading={saving === "key"} className="sm:mb-[26px]">
                 Save key
               </Button>
             </form>
           )}
-
-          <Field label="Model">
-            <Select value={s.model} onChange={(e) => void save("model", { model: e.target.value }, "Model updated")}>
-              {MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
 
           <div>
             <div className="mb-1.5 flex items-baseline justify-between text-sm">
@@ -127,7 +139,7 @@ export default function SettingsPage() {
             </div>
             <p className="mt-2 text-xs text-muted">
               JobApply estimates the cost of every AI request and refuses any that could take the total past your cap. It&apos;s an estimate
-              from token counts — your Anthropic console has the exact figure.
+              from token counts — your {provider.label} account page has the exact figure.
             </p>
             <form
               className="mt-3 flex flex-wrap items-end gap-2"
@@ -147,7 +159,7 @@ export default function SettingsPage() {
               <Button
                 variant="ghost"
                 loading={saving === "reset"}
-                onClick={() => window.confirm("Reset the spend counter to $0? Do this after you top up your Anthropic credit.") && void save("reset", { resetSpend: true }, "Counter reset")}
+                onClick={() => window.confirm("Reset the spend counter to $0? Do this after you top up your AI credit.") && void save("reset", { resetSpend: true }, "Counter reset")}
               >
                 Reset counter
               </Button>
@@ -291,7 +303,7 @@ export default function SettingsPage() {
           <p className="text-sm text-muted">
             Your resume, profile, applications and keys are plain files in the <span className="font-mono">data</span> folder of the project.
             Nothing is uploaded anywhere, with one exception you control: when AI writing is on, your profile and the job description are
-            sent to Anthropic to produce the text. Back up that folder to keep your history; delete it to start over.
+            sent to the provider of the model you picked (DeepSeek or Anthropic) to produce the text. Back up that folder to keep your history; delete it to start over.
           </p>
         </Section>
       </div>
