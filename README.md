@@ -89,7 +89,7 @@ npm run typecheck
 npm run build
 ```
 
-Built with Next.js, TypeScript, Tailwind CSS, and the Anthropic SDK.
+Built with Next.js, TypeScript, Tailwind CSS, and the Anthropic SDK. `unpdf` is pinned to 1.7.0, the last release that runs on Node 20; newer ones need Node 22+.
 
 ```
 src/app/(app)/        pages: home, profile, jobs, applications, settings
