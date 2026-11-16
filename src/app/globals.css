@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f4ef;
+  --surface: #ffffff;
+  --sunken: #efede6;
+  --line: #e2dfd5;
+  --ink: #1a1d1c;
+  --muted: #62676a;
+  --accent: #1d5c4c;
+  --accent-hover: #174a3d;
+  --accent-soft: #e2efe9;
+  --on-accent: #ffffff;
+  --warn: #9a5b06;
+  --warn-soft: #fbf0d9;
+  --danger: #b3261e;
+  --danger-soft: #fbe9e7;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111413;
+    --surface: #1a1e1c;
+    --sunken: #151917;
+    --line: #2b312e;
+    --ink: #eceeec;
+    --muted: #9aa29e;
+    --accent: #6fd0ae;
+    --accent-hover: #8adbbf;
+    --accent-soft: #1a332a;
+    --on-accent: #0b1511;
+    --warn: #e8b45a;
+    --warn-soft: #33290f;
+    --danger: #f1958e;
+    --danger-soft: #3a1c1a;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* The printable resume: a plain white sheet, whatever the app theme. */
+.sheet {
+  background: #fff;
+  color: #111;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .sheet {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+}

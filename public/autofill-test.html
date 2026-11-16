@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Autofill test form</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; }
+      label, .q { display: block; margin-top: 14px; font-weight: 600; }
+      input, textarea, select { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; }
+    </style>
+  </head>
+  <body>
+    <h1>Autofill test form</h1>
+    <p>A stand-in application form for trying the JobApply extension. Nothing here is submitted anywhere.</p>
+    <form onsubmit="return false">
+      <label>First Name <input name="first_name" /></label>
+      <label>Last Name <input name="last_name" /></label>
+      <label for="em">Email</label><input id="em" type="email" />
+      <label>Phone <input type="tel" /></label>
+      <label>Company name <input name="org" /></label>
+      <label>Current title <input /></label>
+      <label>LinkedIn Profile <input name="urls[LinkedIn]" /></label>
+      <label>GitHub URL <input /></label>
+      <label>Website <input value="https://already-filled.example" /></label>
+      <label>Location (City) <input /></label>
+      <div class="q">Will you now or in the future require visa sponsorship?
+        <select name="sponsorship"><option value="">Select…</option><option value="1">Yes</option><option value="0">No</option></select>
+      </div>
+      <label>Desired salary <input /></label>
+      <label>Cover Letter <textarea rows="5" name="cover_letter"></textarea></label>
+      <label>Resume/CV <input type="file" /></label>
+      <label>Password <input type="password" name="password" /></label>
+      <label>How did you hear about us? <input name="source" /></label>
+      <label><input type="checkbox" style="display:inline;width:auto" /> I agree to the terms</label>
+    </form>
+  </body>
+</html>
