@@ -82,7 +82,7 @@ export default function ApplicationPage() {
     );
   }
 
-  const ai = settings.data?.hasApiKey ?? false;
+  const ai = settings.data?.aiReady ?? false;
   const { job } = app;
   const applyUrl = job.applyUrl || job.url;
   const score = app.fit?.score ?? app.match.score;
@@ -246,7 +246,7 @@ export default function ApplicationPage() {
               <Notice className="mb-4">
                 You&apos;re using the built-in drafts.{" "}
                 <Link href="/settings" className="font-medium text-accent hover:underline">
-                  Add an AI key
+                  Set up an AI model
                 </Link>{" "}
                 for writing that&apos;s properly tailored to this job.
               </Notice>
@@ -448,7 +448,7 @@ export default function ApplicationPage() {
                   <Button type="submit" variant="primary" loading={busy === "answer"} disabled={!ai} className="self-start">
                     {aiLabel("Write answer")}
                   </Button>
-                  {!ai && <p className="text-xs text-muted">This one needs an AI key — there&apos;s no sensible template for open questions.</p>}
+                  {!ai && <p className="text-xs text-muted">This one needs an AI model set up in Settings — there&apos;s no sensible template for open questions.</p>}
                 </form>
                 {[...app.answers].reverse().map((qa, reversed) => {
                   const index = app.answers.length - 1 - reversed;

@@ -7,7 +7,7 @@ It runs entirely on your own computer. There is no account to create and nothing
 ## What it does
 
 - **Reads your resume** (PDF, Word, or text) and turns it into an editable profile, plus the details applications always ask for: work authorization, salary expectations, notice period, links.
-- **Searches several job boards at once** — Remotive, Himalayas, Jobicy, Remote OK, Arbeitnow, and any company career pages you follow (Greenhouse, Lever, Ashby) — and ranks results by how well they match your skills.
+- **Searches many job boards at once**, keeps the live remote roles open to the US and Europe, and ranks them by how well they match your skills. Seven free boards work out of the box; more can be switched on in Settings.
 - **Imports any posting** from a link or pasted text, for jobs you found elsewhere.
 - **Tailors each application**: a fit analysis, a cover letter, a resume re-ordered for the role (saved as a PDF from the browser), and answers to the form's open questions.
 - **Fills in application forms** with a small browser extension. It never presses submit — you review and send.
@@ -31,30 +31,51 @@ Then open <http://localhost:3000>. On Windows you can double-click `JobApply.bat
 2. **Find jobs** — search, then press *Tailor my application* on anything promising.
 3. **Applications** — write the materials, open the application, mark it applied.
 
-## Optional keys
+## AI models
 
-Everything above works without these. Both are entered on the **Settings** page and stored only in the local `data` folder.
+Cover letters, resume rewrites, fit analysis, form answers and more accurate resume reading are written by an AI model. Without one you get the built-in drafts. Pick any provider on the **Settings** page; each is labelled free or paid there.
 
-| Key | What it adds | Cost |
+| Provider | Tier | What you get |
 | --- | --- | --- |
-| AI key — DeepSeek (default) or Anthropic | Cover letters, resume rewrites, fit analysis and form answers written by an AI model instead of the built-in templates, and more accurate resume reading | Pay-as-you-go and prepaid: with any auto top-up left off, it cannot cost more than the balance you load |
-| Adzuna app ID + key | Local and on-site listings with real location search (the built-in boards lean remote) | Free |
+| Ollama | Free, on your computer | Models you have downloaded, unlimited, nothing leaves your machine |
+| LM Studio | Free, on your computer | Same, through LM Studio's local server |
+| Google Gemini | Free | Free tier with daily limits. Google uses free-tier prompts to improve its products |
+| Groq | Free | Free plan with per-minute and per-day limits, very fast |
+| OpenRouter | Free | Rotating free models: 50 requests a day, 20 a minute |
+| DeepSeek | Paid | Prepaid, roughly 1–2¢ per tailored application |
+| Anthropic (Claude) | Paid | Prepaid, under 1¢ per application on Haiku up to 15–25¢ on Opus |
+| Custom endpoint | Yours | Any OpenAI-compatible service or server |
 
-### Keeping AI spend under control
+Settings can load each provider's current model list and send a test message, so you know a setup works before relying on it. Free allowances and model names change often; the ones above were checked against each provider's documentation in November 2026.
 
-JobApply estimates the cost of every AI request from its token counts and keeps a running total. Before each request it assumes the worst case and refuses to send anything that could take the total past your cap (default **$5**, adjustable in Settings). The model is also your choice:
+Keys can also be supplied as environment variables: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`.
 
-| Model | Provider | Roughly, per fully tailored application |
+### Keeping paid spend under control
+
+For paid providers, JobApply estimates the cost of every request from its token counts and keeps a running total. Before each request it assumes the worst case and refuses to send anything that could take the total past your cap (default **$5**, adjustable in Settings). Free and local models never count towards it. The total is an estimate; the provider's account page has the exact figure.
+
+## Job sources
+
+Every search goes to all the sources that are switched on. Settings lists each one with what it covers and what it costs.
+
+| Source | Tier | Covers |
 | --- | --- | --- |
-| DeepSeek Flash (default) | DeepSeek | 1–2¢ |
-| DeepSeek V4 Pro | DeepSeek | 4–6¢ |
-| Claude Haiku 5.5 | Anthropic | under 1¢ |
-| Claude Sonnet 5.5 | Anthropic | 8–12¢ |
-| Claude Opus 5.5 | Anthropic | 15–25¢ |
+| Remotive, Himalayas, Jobicy, Remote OK, We Work Remotely, Working Nomads | Free, no sign-up | Remote jobs worldwide |
+| Arbeitnow | Free, no sign-up | Germany and wider Europe |
+| Company watchlist (Greenhouse, Lever, Ashby) | Free, no sign-up | Open roles at companies you follow |
+| Adzuna | Free with a key | Local and on-site jobs in 19 countries |
+| USAJOBS | Free with a key | US federal government jobs |
+| Reed.co.uk | Free with a key | UK jobs |
+| Jooble | Free with a key | Worldwide aggregator |
+| Google Jobs via SerpApi | 250 free searches a month, then paid | Listings Google gathers from LinkedIn, Indeed, Glassdoor and company sites |
 
-The model you pick decides which provider's key is needed. DeepSeek figures use its peak-hour rates; off-peak is half. The total shown in Settings is an estimate; the provider's account page has the exact figure.
+LinkedIn and Indeed have no public job-search API, so they are not connected; use *Add a job yourself → Paste a job* for postings found there.
 
-You can also supply a key as a `DEEPSEEK_API_KEY` or `ANTHROPIC_API_KEY` environment variable instead of typing it into Settings.
+### What a search keeps
+
+- **Remote by default**, with a choice of *US and Europe*, *US*, *Europe* or *Anywhere*. Most "remote" postings name the countries they can hire in, and JobApply reads that restriction.
+- **Live postings only.** Listings older than 60 days are dropped, as are ones a board marks as expired. Roles on a followed company's own careers page are always kept, since those pages list only open roles.
+- **Ranked by fit** against your profile, then by how well they answer the search, with a nudge for newer postings.
 
 ## The form-filling extension
 
@@ -70,8 +91,8 @@ To see it work without a real application, open <http://localhost:3000/autofill-
 
 - Your resume, profile, applications, and keys are plain JSON files in `data/`. That folder is git-ignored and never leaves your machine.
 - The server only accepts connections from this computer, and rejects requests coming from other websites open in your browser.
-- Job searches send your search terms to the job boards. Importing a link fetches that page.
-- If you turn on AI writing, your profile and the job description are sent to the provider of the model you picked (DeepSeek or Anthropic) to generate the text. Nothing is sent to either otherwise.
+- Job searches send your search terms to the job sources that are switched on. Importing a link fetches that page.
+- When an AI model is in use, your profile and the job description are sent to that provider to generate the text. Nothing is sent otherwise, and a model on your own computer (Ollama, LM Studio) keeps even that local.
 
 ## What it deliberately doesn't do
 
@@ -91,15 +112,15 @@ npm run typecheck
 npm run build
 ```
 
-Built with Next.js, TypeScript and Tailwind CSS. AI calls go to DeepSeek's chat completions API or, for Claude models, through the Anthropic SDK. `unpdf` is pinned to 1.7.0, the last release that runs on Node 20; newer ones need Node 22+.
+Built with Next.js, TypeScript and Tailwind CSS. AI calls use each provider's OpenAI-style chat API, Ollama's own API for local models, or the Anthropic SDK for Claude. `unpdf` is pinned to 1.7.0, the last release that runs on Node 20; newer ones need Node 22+.
 
 ```
 src/app/(app)/        pages: home, profile, jobs, applications, settings
 src/app/print/        printable resume and cover letter
 src/app/api/          route handlers
-src/lib/jobs/         job board sources, search and ranking, link import
+src/lib/jobs/         source catalog and loaders, region and freshness filters, ranking, link import
 src/lib/resume/       resume text extraction and the key-free parser
-src/lib/ai/           model list, DeepSeek and Claude clients (budget guard, usage tracking), prompts
+src/lib/ai/           provider catalog, clients (budget guard, usage tracking), prompts
 src/lib/match.ts      keyword match scoring
 src/lib/templates.ts  key-free cover letter, fit and resume fallbacks
 src/proxy.ts          localhost-only request guard

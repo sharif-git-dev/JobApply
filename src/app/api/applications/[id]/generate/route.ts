@@ -40,7 +40,7 @@ export const POST = route(async (request: Request, ctx: RouteContext<"/api/appli
   const question = input.question?.trim();
   if (!question) throw new HttpError("Type the question from the application form.");
   if (!ai) {
-    throw new HttpError("Answering application questions needs an AI key. Add one in Settings.", 400);
+    throw new HttpError("Answering application questions needs an AI model. Set one up in Settings.", 400);
   }
   const answer = await answerQuestion(profile, job, question);
   return NextResponse.json(await updateApplication(id, (a) => ({ ...a, answers: [...a.answers, { question, answer }] })));

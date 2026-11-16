@@ -2,7 +2,8 @@
 
 import { ArrowRight, Check, FileUp, KeyRound, Search } from "lucide-react";
 import Link from "next/link";
-import { timeAgo, usd, useData } from "@/lib/client";
+import { PROVIDER_BY_ID } from "@/lib/ai/providers";
+import { timeAgo, useData } from "@/lib/client";
 import { STATUSES, type Application, type Profile, type PublicSettings } from "@/lib/types";
 import { Card, Notice, PageHeader, ScoreRing, Spinner, buttonClass, cx } from "@/components/ui";
 
@@ -47,14 +48,14 @@ export default function Home() {
       cta: "Find jobs",
     },
     {
-      done: s.hasApiKey,
+      done: s.aiReady,
       icon: KeyRound,
       title: "Turn on AI writing (optional)",
-      body: s.hasApiKey
-        ? `${usd(s.spentUsd)} of your ${usd(s.budgetUsd)} cap used`
-        : "Add a DeepSeek (or Anthropic) key for tailored cover letters and answers. Without it you still get search, matching, and templates.",
+      body: s.aiReady
+        ? `Using ${PROVIDER_BY_ID[s.aiProvider]?.label ?? "AI"}. Switch providers any time in Settings.`
+        : "Connect a free AI service, a model on your own computer, or a paid one for tailored cover letters and answers. Without it you still get search, matching, and templates.",
       href: "/settings",
-      cta: s.hasApiKey ? "Settings" : "Add key",
+      cta: s.aiReady ? "Settings" : "Set up AI",
     },
   ];
   const next = steps.find((step) => !step.done);

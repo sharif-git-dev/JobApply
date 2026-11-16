@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useToast } from "@/components/Toast";
-import { Button, Card, Chip, Field, Input, Notice, PageHeader, ScoreRing, Spinner, Textarea, buttonClass, cx } from "@/components/ui";
+import { Button, Card, Chip, Field, Input, Notice, PageHeader, ScoreRing, Select, Spinner, Textarea, buttonClass, cx } from "@/components/ui";
 import { api, sourceName, timeAgo } from "@/lib/client";
-import type { Application, Profile, ScoredJob, SourceStatus } from "@/lib/types";
+import type { Application, Profile, RegionFilter, ScoredJob, SourceStatus } from "@/lib/types";
 
 interface SearchResult {
   jobs: ScoredJob[];
@@ -161,18 +161,19 @@ export default function JobsPage() {
   const toast = useToast();
   const [q, setQ] = useState("");
   const [location, setLocation] = useState("");
-  const [remoteOnly, setRemoteOnly] = useState(false);
+  const [remoteOnly, setRemoteOnly] = useState(true);
+  const [region, setRegion] = useState<RegionFilter>("us-eu");
   const [result, setResult] = useState<SearchResult | null>(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [hasProfile, setHasProfile] = useState(true);
 
-  async function search(query: string, where: string, remote: boolean) {
+  async function search(query: string, where: string, remote: boolean, open: RegionFilter) {
     setSearching(true);
     setError("");
     try {
-      const params = new URLSearchParams({ q: query, location: where, remote: remote ? "1" : "0" });
+      const params = new URLSearchParams({ q: query, location: where, remote: remote ? "1" : "0", region: open });
       setResult(await api<SearchResult>(`/api/jobs/search?${params}`));
     } catch (err) {
       setError((err as Error).message);
@@ -188,11 +189,12 @@ export default function JobsPage() {
       .then((p) => {
         if (!alive) return;
         const role = p.targetRoles[0] || p.headline || p.experience[0]?.title || "";
-        const remote = p.remotePreference === "remote";
+        // Remote is the default; only someone who asked for on-site or hybrid starts with it off.
+        const remote = p.remotePreference !== "onsite" && p.remotePreference !== "hybrid";
         setHasProfile(Boolean(p.resumeText || p.skills.length));
         setQ(role);
         setRemoteOnly(remote);
-        if (role) void search(role, "", remote);
+        if (role) void search(role, "", remote, "us-eu");
       })
       .catch(() => undefined);
     return () => {
@@ -217,7 +219,7 @@ export default function JobsPage() {
     <>
       <PageHeader
         title="Find jobs"
-        lede="Searches several job boards at once and ranks results by how well they match your profile."
+        lede="Searches every job board you have switched on, keeps live remote roles open to the US and Europe, and ranks them by how well they match your profile."
         actions={
           <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => setAdding(!adding)} aria-expanded={adding}>
             Add a job yourself
@@ -240,7 +242,7 @@ export default function JobsPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void search(q, location, remoteOnly);
+          void search(q, location, remoteOnly, region);
         }}
         className="mb-5 flex flex-col gap-2 rounded-xl border border-line bg-surface p-3 sm:flex-row sm:items-center"
       >
@@ -252,7 +254,15 @@ export default function JobsPage() {
           <MapPin className="pointer-events-none absolute left-3 top-3 size-4 text-muted" aria-hidden />
           <Input aria-label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location (optional)" className="pl-9" />
         </div>
-        <label className="flex cursor-pointer items-center gap-2 px-2 text-sm">
+        <div className="sm:w-44">
+          <Select aria-label="Open to candidates in" value={region} onChange={(e) => setRegion(e.target.value as RegionFilter)} disabled={Boolean(location)}>
+            <option value="us-eu">US and Europe</option>
+            <option value="us">US</option>
+            <option value="eu">Europe</option>
+            <option value="any">Anywhere</option>
+          </Select>
+        </div>
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap px-2 text-sm">
           <input type="checkbox" checked={remoteOnly} onChange={(e) => setRemoteOnly(e.target.checked)} className="size-4 accent-[var(--accent)]" />
           Remote only
         </label>
@@ -277,17 +287,17 @@ export default function JobsPage() {
           <p className="text-sm text-muted">
             {result.jobs.length === 0
               ? "No matches."
-              : `${result.jobs.length} ${result.jobs.length === 1 ? "job" : "jobs"} from ${result.sources.filter((s) => s.ok && s.count).length} sources, best match first.`}
-            {failed.length > 0 && ` Couldn't reach ${failed.map((s) => s.source).join(", ")} just now.`}
+              : `${result.jobs.length} ${result.jobs.length === 1 ? "job" : "jobs"} from ${result.sources.filter((s) => s.ok && s.count).length} sources, best match first. Postings older than 60 days are left out.`}
+            {failed.length > 0 && ` Skipped: ${failed.map((s) => `${s.source} (${s.error})`).join("; ")}.`}
           </p>
           {result.jobs.length === 0 && (
             <Card className="px-6 py-10 text-center text-sm text-muted">
-              Try a broader title, fewer words, or clear the location. The free boards lean remote and tech — for local on-site roles, add
-              a free Adzuna key in{" "}
-              <Link href="/settings" className="font-medium text-accent hover:underline">
+              Try a broader title or fewer words, or widen “US and Europe” to “Anywhere”. More boards, including free ones that need a
+              key, can be switched on in{" "}
+              <Link href="/settings#sources" className="font-medium text-accent hover:underline">
                 Settings
               </Link>
-              , or add postings yourself.
+              .
             </Card>
           )}
           {result.jobs.map((job) => (

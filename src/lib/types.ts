@@ -154,41 +154,66 @@ export interface UsageEntry {
 }
 
 export interface Settings {
-  deepseekApiKey: string;
-  anthropicApiKey: string;
-  /** The model decides the provider (see lib/ai/models.ts). */
-  model: string;
+  /** Which AI provider writes for you (an id from lib/ai/providers.ts). */
+  aiProvider: string;
+  /** Per provider: the API key, the chosen model, and an address override for local/custom ones. */
+  aiKeys: Record<string, string>;
+  aiModels: Record<string, string>;
+  aiBaseUrls: Record<string, string>;
   /** Hard cap on estimated AI spend. The app refuses AI calls that could cross it. */
   budgetUsd: number;
   spentUsd: number;
   usage: UsageEntry[];
-  adzunaAppId: string;
-  adzunaAppKey: string;
-  adzunaCountry: string;
+  /** Per job source: its key and option fields (see lib/jobs/catalog.ts). */
+  sourceConfig: Record<string, Record<string, string>>;
+  disabledSources: string[];
   watchlist: WatchlistEntry[];
+}
+
+/** One AI provider as the browser sees it — never the raw key. */
+export interface PublicProvider {
+  id: string;
+  /** A key is saved or supplied by the environment (always true for providers that need none). */
+  hasKey: boolean;
+  keyHint: string;
+  keyFromEnv: boolean;
+  model: string;
+  baseUrl: string;
+  /** Everything it needs is filled in. */
+  ready: boolean;
+}
+
+/** One job source as the browser sees it. Secret fields are reported only as set / not set. */
+export interface PublicSource {
+  id: string;
+  enabled: boolean;
+  /** All required fields are filled in (always true for keyless sources). */
+  configured: boolean;
+  values: Record<string, string>;
+  secretsSet: Record<string, boolean>;
 }
 
 /** What the browser is allowed to see — never the raw keys. */
 export interface PublicSettings {
-  /** Provider of the selected model; the key fields below describe that provider's key. */
-  provider: "deepseek" | "anthropic";
-  hasApiKey: boolean;
-  apiKeyHint: string;
-  apiKeyFromEnv: boolean;
-  model: string;
+  aiProvider: string;
+  /** The selected provider is fully set up, so AI features will work. */
+  aiReady: boolean;
+  providers: PublicProvider[];
   budgetUsd: number;
   spentUsd: number;
   usage: UsageEntry[];
-  adzunaAppId: string;
-  hasAdzunaKey: boolean;
-  adzunaCountry: string;
+  sources: PublicSource[];
   watchlist: WatchlistEntry[];
 }
+
+/** Where a remote job must be open to hiring. */
+export type RegionFilter = "us-eu" | "us" | "eu" | "any";
 
 export interface SearchQuery {
   q: string;
   location: string;
   remoteOnly: boolean;
+  region: RegionFilter;
 }
 
 export interface ScoredJob extends Job {

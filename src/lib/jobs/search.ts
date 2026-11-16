@@ -1,6 +1,7 @@
 import { profileSkills, scoreJob, tokenize } from "../match";
 import { getApplications, getProfile, getSettings } from "../store";
 import type { Job, ScoredJob, SearchQuery, SourceStatus } from "../types";
+import { isFresh, regionOk } from "./region";
 import { sourcesFor } from "./sources";
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -46,6 +47,7 @@ function locationOk(job: Job, q: SearchQuery): boolean {
 export async function searchJobs(q: SearchQuery): Promise<{ jobs: ScoredJob[]; sources: SourceStatus[] }> {
   const [profile, settings, applications] = await Promise.all([getProfile(), getSettings(), getApplications()]);
   const tokens = tokenize(q.q);
+  const now = Date.now();
   const sources = sourcesFor(q, settings);
 
   const settled = await Promise.allSettled(sources.map((s) => s.load()));
@@ -63,6 +65,9 @@ export async function searchJobs(q: SearchQuery): Promise<{ jobs: ScoredJob[]; s
     for (const job of result.value) {
       if (!job.title || !job.url) continue;
       if (!locationOk(job, q)) continue;
+      // A typed location is its own constraint; otherwise keep to the regions asked for.
+      if (!q.location && !regionOk(job, q.region)) continue;
+      if (!isFresh(job, now)) continue;
       const rel = relevance(job, tokens, source.bulk);
       if (rel === 0) continue;
       const key = `${norm(job.title)}|${norm(job.company)}`;
@@ -76,7 +81,6 @@ export async function searchJobs(q: SearchQuery): Promise<{ jobs: ScoredJob[]; s
 
   const known = profileSkills(profile);
   const savedIds = new Set(applications.map((a) => a.job.id));
-  const now = Date.now();
   const jobs = ranked
     .map(({ job, relevance: rel }) => {
       const match = scoreJob(profile, job, known);

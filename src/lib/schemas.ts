@@ -95,14 +95,24 @@ export const GenerateInput = z.object({
 
 export const SettingsPatch = z
   .object({
-    deepseekApiKey: text(300),
-    anthropicApiKey: text(300),
-    model: text(100),
+    /** Switch which provider writes for you. */
+    aiProvider: text(40),
+    /** Update one provider's key, model or address. */
+    ai: z.object({
+      provider: text(40),
+      key: text(400).optional(),
+      model: text(200).optional(),
+      baseUrl: text(300).optional(),
+    }),
     budgetUsd: z.number().min(0).max(1000),
     resetSpend: z.boolean(),
-    adzunaAppId: text(100),
-    adzunaAppKey: text(200),
-    adzunaCountry: text(4),
+    /** Switch one job source on or off, fill in its fields, or clear them. */
+    source: z.object({
+      id: text(40),
+      enabled: z.boolean().optional(),
+      values: z.record(z.string().max(40), text(400)).optional(),
+      clear: z.boolean().optional(),
+    }),
     watchlist: z.array(z.object({ ats: z.enum(["greenhouse", "lever", "ashby"]), slug: text(100).min(1) })).max(40),
   })
   .partial();

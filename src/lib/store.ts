@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { DEFAULT_MODEL } from "./ai/models";
+import { DEFAULT_PROVIDER } from "./ai/providers";
 import { EMPTY_PROFILE, type Application, type Profile, type Settings } from "./types";
 
 /**
@@ -93,15 +93,15 @@ export async function updateApplication(
 // ---- Settings --------------------------------------------------------------
 
 export const DEFAULT_SETTINGS: Settings = {
-  deepseekApiKey: "",
-  anthropicApiKey: "",
-  model: DEFAULT_MODEL,
+  aiProvider: DEFAULT_PROVIDER,
+  aiKeys: {},
+  aiModels: {},
+  aiBaseUrls: {},
   budgetUsd: 5,
   spentUsd: 0,
   usage: [],
-  adzunaAppId: "",
-  adzunaAppKey: "",
-  adzunaCountry: "us",
+  sourceConfig: {},
+  disabledSources: [],
   watchlist: [],
 };
 
