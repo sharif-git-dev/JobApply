@@ -53,7 +53,7 @@ Redeploy after setting the variables. Vercel builds the installed app and websit
 
 ## 4. Verify activation
 
-1. Open the live app signed out: home and basic tools should work in guest mode, with a sign-in option for account sync. Guest information stays in the browser.
+1. Open the live app signed out: home and basic tools should work in guest mode, with a sign-in option for account sync. Guest information is temporary and disappears on reload. A pre-existing browser profile must not appear while signed out.
 2. Create a test user, confirm the email, save a profile and an application, then sign out.
 3. Sign in on another device/browser and confirm the saved information appears.
 4. Create a second test user. It must start empty and must not see the first user's information.
@@ -65,7 +65,7 @@ Once these checks pass, invite other people. The user list is in Supabase → Au
 
 - Each verified Supabase user has one encrypted data row. Row-level security permits only that user to access it. No service-role key is used.
 - The server gets the owner from a token verified by Supabase. Submitted user IDs or browser state cannot select someone else's account.
-- Guest requests explicitly use browser-supplied state and cannot access account export, import or erasure. No database row is loaded or saved for guests. Signing in remounts the app against private account data; moving guest data into it requires an explicit import.
+- Guest requests explicitly use browser-supplied state and cannot access account export, import or erasure. No database row is loaded or saved for guests. Signing in remounts the app against private account data; guest state is cleared on sign-in changes and never reads persistent browser profiles. Older browser data can only be recovered with an explicit import while signed in.
 - Profile, resume text, application materials and provider keys are encrypted on the application server with AES-256-GCM before storage. The app server can decrypt them to run searches and AI requests; this is not end-to-end encryption from the app owner.
 - Simultaneous saves use an atomic version check. A losing write asks the user to reload instead of silently replacing another completed save.
 - The browser keeps the auth session, while account profile data is read fresh from the server. Signing out unmounts loaded application state. Old browser-only data is never attached to an account automatically: Settings offers an explicit import, replacing that account's current data after confirmation.

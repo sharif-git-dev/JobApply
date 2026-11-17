@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import { authClient } from "@/lib/auth/browser";
+import { clearGuestData } from "@/lib/hosted";
 import { Button, Notice, Spinner, buttonClass } from "./ui";
 
 const AccountContext = createContext({ signedIn: false });
@@ -24,6 +25,7 @@ function AccountSession({ children }: { children: ReactNode }) {
     let alive = true;
     const client = authClient();
     const expired = () => {
+      clearGuestData();
       setUserId(""); setEmail("");
       setError("Your session ended. Sign in again to access your account, or continue using the guest tools on this device.");
       void client.auth.signOut({ scope: "local" });
@@ -41,17 +43,24 @@ function AccountSession({ children }: { children: ReactNode }) {
     void check().catch(() => { if (alive) setError("Could not check your sign-in. Reload to try again."); });
     const { data } = client.auth.onAuthStateChange((event, session) => {
       if (!alive) return;
-      if (event === "SIGNED_OUT") { setUserId(""); setEmail(""); setReady(true); }
+      if (event === "SIGNED_OUT") { clearGuestData(); setUserId(""); setEmail(""); setReady(true); }
       else if (event === "SIGNED_IN" && session) {
+        clearGuestData();
         setUserId(session.user.id); setEmail(session.user.email ?? ""); setError(""); setReady(true);
       }
     });
+    const restored = (event: PageTransitionEvent) => {
+      // A browser Back action must recheck authentication before restoring a private screen.
+      if (event.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", restored);
     window.addEventListener("jobapply:signed-out", expired);
-    return () => { alive = false; data.subscription.unsubscribe(); window.removeEventListener("jobapply:signed-out", expired); };
+    return () => { alive = false; data.subscription.unsubscribe(); window.removeEventListener("jobapply:signed-out", expired); window.removeEventListener("pageshow", restored); };
   }, []);
 
   async function signOut() {
     setBusy(true);
+    clearGuestData();
     const { error } = await authClient().auth.signOut({ scope: "local" });
     if (error) { setError("Could not sign out. Try again."); setBusy(false); return; }
     // Drop all loaded account data and return to the public home page.
@@ -63,8 +72,8 @@ function AccountSession({ children }: { children: ReactNode }) {
     <AccountContext.Provider value={{ signedIn: Boolean(userId) }}>
       <div key={userId || "guest"}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 text-sm md:pl-60">
-          <span className="min-w-0 truncate text-muted">{userId ? email : "Guest · your information stays on this device"}</span>
-          {userId ? <Button size="sm" onClick={() => void signOut()} loading={busy}>Sign out</Button> : <Link href="/login" className={buttonClass("primary", "sm")}>Sign in to sync your data</Link>}
+          <span className="min-w-0 truncate text-muted">{userId ? `Signed in · ${email}` : "Guest · temporary workspace"}</span>
+          {userId ? <Button size="sm" onClick={() => void signOut()} loading={busy}>Sign out</Button> : <Link href="/login" className={buttonClass("primary", "sm")}>Sign in to access your data</Link>}
         </div>
         {error && <Notice tone="danger">{error}</Notice>}
         {children}

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
+import { File as NodeFile } from "node:buffer";
 import { test } from "node:test";
 import { PGlite } from "@electric-sql/pglite";
 import { seal, unseal } from "../src/lib/auth/vault";
@@ -8,6 +9,51 @@ import { AccountBackup } from "../src/lib/auth/backup";
 
 const alice = "00000000-0000-4000-8000-000000000001";
 const bob = "00000000-0000-4000-8000-000000000002";
+
+test("guests never read saved browser profiles and discard responses after sign-out", async () => {
+  process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = "1";
+  process.env.NEXT_PUBLIC_HOSTED = "1";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://accounts.example.test";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "public-test-key";
+  const { hostedApi, clearGuestData } = await import("../src/lib/hosted");
+  const originalFetch = globalThis.fetch;
+  const originalIndexedDB = Object.getOwnPropertyDescriptor(globalThis, "indexedDB");
+  const originalFile = Object.getOwnPropertyDescriptor(globalThis, "File");
+  let storageReads = 0;
+  Object.defineProperty(globalThis, "indexedDB", { configurable: true, get() { storageReads++; throw new Error("Old private profile must not be read"); } });
+  if (!originalFile) Object.defineProperty(globalThis, "File", { configurable: true, value: NodeFile });
+  let finish: ((response: Response) => void) | undefined;
+  let started: (() => void) | undefined;
+  const inFlight = new Promise<void>((resolve) => { started = resolve; });
+  globalThis.fetch = async (_input, init) => {
+    const envelope = JSON.parse(String(init?.body));
+    if (envelope.json?.fullName === "Late result") {
+      started!();
+      return new Promise<Response>((resolve) => { finish = resolve; });
+    }
+    const profile = envelope.json ?? envelope.state.profile ?? { fullName: "" };
+    return Response.json({ status: 200, data: profile, state: { profile } });
+  };
+  try {
+    clearGuestData();
+    assert.equal((await hostedApi<{ fullName: string }>("/api/profile")).fullName, "");
+    await hostedApi("/api/profile", { method: "PUT", json: { fullName: "Temporary guest" } });
+    assert.equal((await hostedApi<{ fullName: string }>("/api/profile")).fullName, "Temporary guest");
+    const pending = hostedApi("/api/profile", { method: "PUT", json: { fullName: "Late result" } });
+    const rejected = assert.rejects(pending, /sign-in changed/);
+    await inFlight;
+    clearGuestData();
+    finish!(Response.json({ status: 200, data: { fullName: "Late result" }, state: { profile: { fullName: "Late result" } } }));
+    await rejected;
+    assert.equal((await hostedApi<{ fullName: string }>("/api/profile")).fullName, "");
+    assert.equal(storageReads, 0, "Guests must not even open persistent browser storage");
+  } finally {
+    clearGuestData(); globalThis.fetch = originalFetch;
+    if (originalIndexedDB) Object.defineProperty(globalThis, "indexedDB", originalIndexedDB);
+    else Reflect.deleteProperty(globalThis, "indexedDB");
+    if (!originalFile) Reflect.deleteProperty(globalThis, "File");
+  }
+});
 
 test("account encryption authenticates both content and owner", () => {
   process.env.JOBAPPLY_ACCOUNT_ENCRYPTION_KEY = randomBytes(32).toString("hex");

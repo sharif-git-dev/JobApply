@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { HOSTED } from "@/lib/mode";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import { useAccount } from "@/components/AccountGate";
 import { ToastProvider } from "./Toast";
 import { InstallApp } from "./InstallApp";
@@ -50,7 +51,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <p className="mt-auto px-3 text-xs leading-relaxed text-muted">{signedIn ? "Your profile and applications are saved privately to your account." : HOSTED ? "Your resume and applications are kept in this browser, not on a server." : "Your resume and applications stay on this computer."}</p>
+          <p className="mt-auto px-3 text-xs leading-relaxed text-muted">{signedIn ? "Your profile and applications are saved privately to your account." : ACCOUNTS_ENABLED ? "Guest information is temporary. Sign in to access your saved profile." : HOSTED ? "Your resume and applications are kept in this browser, not on a server." : "Your resume and applications stay on this computer."}</p>
         </aside>
 
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-12 md:pt-9"><InstallApp />{children}</main>

@@ -10,6 +10,7 @@ import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { api, usd, useData } from "@/lib/client";
 import { eraseData, exportData, importData, importBrowserData } from "@/lib/hosted";
 import { HOSTED } from "@/lib/mode";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import { useAccount } from "@/components/AccountGate";
 import type { PublicSettings, WatchlistEntry } from "@/lib/types";
 
@@ -289,7 +290,7 @@ export default function SettingsPage() {
             <Section
               id="data"
               title="Your data"
-              hint={signedIn ? "Your profile, resume text, applications and settings are saved privately to your account. Sign in on any device to access them. Account data is encrypted before being stored. Backups let you keep your own copy." : "Guest information is saved in this browser, on this device. It is not saved to an account. Clearing browser data removes it, so keep a backup. Sign in to use private account storage across devices; guest data can be imported from here after signing in."}
+              hint={signedIn ? "Your profile, resume text, applications and settings are saved privately to your account. Sign in on any device to access them. Account data is encrypted before being stored. Backups let you keep your own copy." : ACCOUNTS_ENABLED ? "Guest tools never load your saved profile. Guest information disappears when you reload, close the page, or sign in. Download a backup before leaving to keep a guest draft. Sign in to access saved account data." : "Your information is saved in this browser. Download a backup to keep your own copy."}
             >
               <div className="flex flex-wrap gap-2">
                 <Button variant="primary" onClick={() => void downloadBackup()}>
@@ -297,7 +298,7 @@ export default function SettingsPage() {
                 </Button>
                 <input ref={restoreInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Backup file" onChange={(e) => void restoreBackup(e.target.files?.[0])} />
                 <Button onClick={() => restoreInput.current?.click()}>Restore from a backup</Button>
-                {signedIn && <Button onClick={() => void migrateBrowserData()}>Import guest or older browser data</Button>}
+                {signedIn && <Button onClick={() => void migrateBrowserData()}>Import older browser data</Button>}
                 <Button variant="danger" onClick={() => void eraseEverything()}>
                   {signedIn ? "Erase account data" : "Erase everything"}
                 </Button>

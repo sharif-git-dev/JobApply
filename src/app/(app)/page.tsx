@@ -74,7 +74,7 @@ export default function Home() {
 
       {HOSTED && (
         <Notice className="mb-4">
-          {signedIn ? "Your profile and applications are saved to your account and available when you sign in on another device. Manage your data in " : <>You can search jobs, read your resume, and prepare applications without signing in. Guest information is saved in this browser only. <Link href="/login" className="font-medium text-accent underline">Sign in</Link> to keep information across devices, or manage your browser data in </>}
+          {signedIn ? "Your profile and applications are saved to your account and available when you sign in on another device. Manage your data in " : <>You can search jobs, read your resume, and prepare applications without signing in. <Link href="/login" className="font-medium text-accent underline">Sign in</Link> to access your saved profile. Manage information for your current workspace in </>}
           <Link href="/settings#data" className="font-medium text-accent hover:underline">
             Settings → Your data
           </Link>

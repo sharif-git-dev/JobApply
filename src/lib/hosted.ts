@@ -3,14 +3,15 @@
 import type { Application } from "./types";
 import { usingAccount } from "./auth/browser";
 import { accountApi } from "./account-client";
+import { ACCOUNTS_ENABLED } from "./auth/config";
+import { GuestState } from "./guest-state";
 
 /**
  * The browser half of hosted mode (see ./mode.ts).
  *
- * On the public website nothing is stored on the server. A visitor's profile,
- * applications and settings (including their API keys) live in this browser's
- * IndexedDB. Each API call sends the server the slices it needs and saves back
- * whatever the server changed.
+ * Guests on an account-enabled website use temporary memory only, never older
+ * profiles in IndexedDB. Deployments without accounts retain browser storage.
+ * Each API call sends the server the slices it needs and saves returned changes.
  */
 
 // ---- Storage ------------------------------------------------------------------
@@ -21,6 +22,8 @@ type Key = "profile" | "settings" | "applications";
 
 /** Used when IndexedDB is unavailable (some private windows): data lasts until the tab closes. */
 const memory = new Map<string, unknown>();
+const guest = new GuestState();
+export function clearGuestData() { guest.clear(); }
 let opening: Promise<IDBDatabase | null> | null = null;
 
 function database(): Promise<IDBDatabase | null> {
@@ -38,7 +41,7 @@ function database(): Promise<IDBDatabase | null> {
   return opening;
 }
 
-async function get<T>(key: Key): Promise<T | undefined> {
+async function getLegacy<T>(key: Key): Promise<T | undefined> {
   const db = await database();
   if (!db) return memory.get(key) as T | undefined;
   return new Promise((resolve) => {
@@ -48,7 +51,12 @@ async function get<T>(key: Key): Promise<T | undefined> {
   });
 }
 
+async function get<T>(key: Key): Promise<T | undefined> {
+  return ACCOUNTS_ENABLED ? guest.get<T>(key) : getLegacy<T>(key);
+}
+
 async function set(key: Key, value: unknown): Promise<void> {
+  if (ACCOUNTS_ENABLED) { guest.set(key, value); return; }
   const db = await database();
   if (!db) {
     memory.set(key, value);
@@ -64,7 +72,7 @@ async function set(key: Key, value: unknown): Promise<void> {
 
 /** True when data can't be kept between visits. */
 export async function storageIsTemporary(): Promise<boolean> {
-  return (await database()) === null;
+  return ACCOUNTS_ENABLED || (await database()) === null;
 }
 
 // ---- Talking to the server ------------------------------------------------------
@@ -90,6 +98,7 @@ interface Reply {
 const MAX_REQUEST_BYTES = 4_000_000;
 
 export async function hostedApi<T>(path: string, init?: { method?: string; json?: unknown; form?: FormData }): Promise<T> {
+  const version = guest.version();
   const method = init?.method ?? (init?.json !== undefined || init?.form ? "POST" : "GET");
   const pathname = path.split("?")[0];
   const [profile, settings, stored] = await Promise.all([get("profile"), get("settings"), get<Application[]>("applications")]);
@@ -127,12 +136,14 @@ export async function hostedApi<T>(path: string, init?: { method?: string; json?
 
   // Keep whatever changed, even when the call failed (a failed AI request can still have used some allowance).
   const state = reply.state ?? {};
+  guest.assertCurrent(version);
   if (state.profile) await set("profile", state.profile);
   if (state.settings) await set("settings", state.settings);
   let latest = applications;
   if (state.applications) {
     // Another call may have finished while this one was in flight, so merge against what's stored now.
     latest = (await get<Application[]>("applications")) ?? [];
+    guest.assertCurrent(version);
     const byId = new Map(latest.map((a) => [a.id, a]));
     const sentIds = new Set(sent.map((a) => a.id));
     const merged = state.applications.map((a) => (isStub(a) ? byId.get(a.id) : (a as Application))).filter((a): a is Application => Boolean(a));
@@ -187,7 +198,9 @@ export async function eraseData(): Promise<void> {
 
 /** Explicit opt-in migration only. Never automatically attach an old shared-browser profile to a new account. */
 export async function importBrowserData(): Promise<void> {
-  const [profile, settings, applications] = await Promise.all([get("profile"), get("settings"), get("applications")]);
+  // Older information is recovered only through this explicit, authenticated action.
+  if (!(await usingAccount())) throw new Error("Sign in before importing older browser information.");
+  const [profile, settings, applications] = await Promise.all([getLegacy("profile"), getLegacy("settings"), getLegacy("applications")]);
   if (!profile && !settings && !applications) throw new Error("There is no older JobApply data saved in this browser.");
   await accountApi("/api/account/import", { method: "POST", json: { app: "JobApply", profile: profile ?? {}, settings: settings ?? {}, applications: applications ?? [] } });
 }
