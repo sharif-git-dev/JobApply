@@ -12,9 +12,9 @@ import { EMPTY_PROFILE, type Application, type Profile, type Settings } from "./
  * Local: plain JSON files under ./data (gitignored). Single user, single
  * machine — a file per collection is all this needs.
  *
- * Hosted: nowhere on the server. Each request carries the visitor's own data,
- * the handlers read and change that copy, and whatever changed is handed back
- * for the browser to keep. Nothing a visitor enters is written to disk.
+ * Hosted: handlers read and change an isolated request copy. With accounts,
+ * the gateway loads that copy from the verified user's encrypted database row
+ * and saves changes back there. Legacy browser mode sends its own copy.
  */
 export const DATA_DIR = process.env.JOBAPPLY_DATA_DIR || path.join(process.cwd(), "data");
 

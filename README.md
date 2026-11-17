@@ -2,9 +2,9 @@
 
 Give it your resume once. JobApply finds jobs that fit, tailors each application to the posting, fills in the forms, and keeps track of where every application stands.
 
-**Try it now: <https://job-apply-three.vercel.app>** — nothing to install, and everything you enter stays in your own browser.
+**Try it now: <https://job-apply-three.vercel.app>** — also installable as an app.
 
-There is no account to create and nothing to pay for: the core features work with no API keys at all. Run it privately on your own computer, or put it online as a website other people can use, each with their own data.
+The core features work with no AI keys. Run it privately on your own computer, or share a hosted app with private user accounts once Supabase is connected. Until connected, the hosted app keeps each visitor's data in their own browser.
 
 ## What it does
 
@@ -21,7 +21,7 @@ There is no account to create and nothing to pay for: the core features work wit
 
 The installed version requires an internet connection and receives the latest version when reopened or reloaded. Use the browser where you already keep your JobApply information; if your device gives the installed app separate storage, move your information with Settings → Your data → backup and restore. Each person keeps their own information. Installation adds no charge.
 
-JobApply runs on your own computer, so your resume stays with you. You need [Node.js](https://nodejs.org) 20.9 or newer (the "LTS" download is fine).
+To run the source on your own computer, you need [Node.js](https://nodejs.org) 22 or newer (the "LTS" download is fine).
 
 **The easy way**
 
@@ -60,7 +60,9 @@ Then open <http://localhost:3000>.
 
 ## Putting it online for other people
 
-The same code can run as a public website. Built that way, it stores nothing on the server: each visitor's resume, applications and keys are kept in their own browser and sent along only when a request needs them. There are no accounts and no database, so there is nothing of anyone else's for you to look after.
+The same code can run as a public website or installed app. Connect Supabase for email/password sign-up, sign-in, recovery and private encrypted account data that is available across devices. [Account setup instructions](docs/accounts-setup.md) cover the free project, database migration, email sender and Vercel environment variables. Users can explicitly import their older browser information from Settings; it is never assigned to an account automatically.
+
+Until that connection is configured, the existing browser-storage mode keeps working. Account functionality is implemented but requires a real Supabase project and end-to-end signup testing before activation.
 
 **Deploy to Vercel (free plan)**
 
@@ -74,7 +76,7 @@ Every push to `main` redeploys it. Vercel's free plan pauses a project that goes
 
 | | On your computer | As a website |
 | --- | --- | --- |
-| Where data lives | The `data` folder | Each visitor's browser, with backup and restore in Settings |
+| Where data lives | The `data` folder | Private account when Supabase is connected; otherwise the visitor's browser |
 | AI models | Free hosted, local (Ollama, LM Studio), paid, custom | Free hosted and paid only, each visitor using their own key |
 | Form-filling extension | Yes | No |
 | Who can reach it | Only this computer | Anyone with the link |
@@ -152,7 +154,7 @@ On your own computer:
 - Job searches send your search terms to the job sources that are switched on. Importing a link fetches that page.
 - When an AI model is in use, your profile and the job description are sent to that provider to generate the text. Nothing is sent otherwise, and a model on your own computer (Ollama, LM Studio) keeps even that local.
 
-As a website, a visitor's data is kept in their browser, not on the server. Each request carries the parts of it that request needs; the server uses them to answer and keeps no copy. Keys in the server's own environment are never used on a visitor's behalf.
+With accounts enabled, hosted data is encrypted on the application server and saved per authenticated user in Supabase with row-level security. The server can decrypt it to provide app features; this is not end-to-end encryption. Account backups exclude provider credentials. Without the account connection, the hosted app retains its original browser storage. Keys in the server's own environment are never spent on visitors' behalf.
 
 ## What it deliberately doesn't do
 

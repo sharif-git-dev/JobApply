@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { timeAgo, useData } from "@/lib/client";
 import { HOSTED } from "@/lib/mode";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import { STATUSES, type Application, type Profile, type PublicSettings } from "@/lib/types";
 import { Card, Notice, PageHeader, ScoreRing, Spinner, buttonClass, cx } from "@/components/ui";
 
@@ -72,8 +73,9 @@ export default function Home() {
 
       {HOSTED && (
         <Notice className="mb-4">
-          Everything you enter is saved in this browser only. There is no account, and nothing is stored on a server. Back it up or move it
+          {ACCOUNTS_ENABLED ? "Your profile and applications are saved to your account and available when you sign in on another device. Manage your data in " : <>Everything you enter is saved in this browser only. There is no account, and nothing is stored on a server. Back it up or move it
           to another device from{" "}
+          </>}
           <Link href="/settings#data" className="font-medium text-accent hover:underline">
             Settings → Your data
           </Link>

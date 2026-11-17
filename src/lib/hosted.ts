@@ -1,6 +1,8 @@
 "use client";
 
 import type { Application } from "./types";
+import { ACCOUNTS_ENABLED } from "./auth/config";
+import { accountApi } from "./account-client";
 
 /**
  * The browser half of hosted mode (see ./mode.ts).
@@ -151,6 +153,7 @@ export async function hostedApi<T>(path: string, init?: { method?: string; json?
 // ---- Backup, restore, erase -------------------------------------------------------
 
 export async function exportData(): Promise<string> {
+  if (ACCOUNTS_ENABLED) return JSON.stringify(await accountApi("/api/account/export"), null, 2);
   const [profile, settings, applications] = await Promise.all([get("profile"), get("settings"), get("applications")]);
   return JSON.stringify({ app: "JobApply", version: 1, savedAt: new Date().toISOString(), profile, settings, applications: applications ?? [] }, null, 2);
 }
@@ -163,13 +166,28 @@ export async function importData(text: string): Promise<void> {
     throw new Error("That file isn't a JobApply backup.");
   }
   if (backup?.app !== "JobApply" || !Array.isArray(backup.applications)) throw new Error("That file isn't a JobApply backup.");
+  if (ACCOUNTS_ENABLED) {
+    await accountApi("/api/account/import", { method: "POST", json: backup });
+    return;
+  }
   await set("profile", backup.profile ?? {});
   await set("settings", backup.settings ?? {});
   await set("applications", backup.applications);
 }
 
 export async function eraseData(): Promise<void> {
+  if (ACCOUNTS_ENABLED) {
+    await accountApi("/api/account/erase", { method: "DELETE" });
+    return;
+  }
   await set("profile", {});
   await set("settings", {});
   await set("applications", []);
+}
+
+/** Explicit opt-in migration only. Never automatically attach an old shared-browser profile to a new account. */
+export async function importBrowserData(): Promise<void> {
+  const [profile, settings, applications] = await Promise.all([get("profile"), get("settings"), get("applications")]);
+  if (!profile && !settings && !applications) throw new Error("There is no older JobApply data saved in this browser.");
+  await accountApi("/api/account/import", { method: "POST", json: { app: "JobApply", profile: profile ?? {}, settings: settings ?? {}, applications: applications ?? [] } });
 }

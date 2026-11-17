@@ -3,6 +3,7 @@
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { HOSTED } from "@/lib/mode";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import { Button } from "./ui";
 
 interface InstallEvent extends Event {
@@ -73,7 +74,7 @@ export function InstallApp() {
           <li><strong>Mac:</strong> in Safari choose File → Add to Dock, or install from Chrome’s menu.</li>
         </ul>
         <p className="mt-2">An internet connection is required. Updates appear when you reopen or reload the app.</p>
-        <p className="mt-2">{HOSTED
+        <p className="mt-2">{ACCOUNTS_ENABLED ? "Sign in with the same account on any device to access your saved profile and applications." : HOSTED
           ? "Use the same browser to install if you have already entered information. Some devices use separate app storage; Settings → Your data lets you back up and restore your information."
           : "This local copy needs its JobApply server running. For an app that opens without starting a server, install the shared online version."}</p>
         {!HOSTED && <a className="mt-2 inline-block font-medium text-accent underline" href="https://job-apply-three.vercel.app/">Open the online app</a>}

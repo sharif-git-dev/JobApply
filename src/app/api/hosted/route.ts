@@ -11,16 +11,17 @@ import * as profile from "@/app/api/profile/route";
 import * as resume from "@/app/api/resume/route";
 import * as settings from "@/app/api/settings/route";
 import { HOSTED } from "@/lib/mode";
-import { withVisitorData } from "@/lib/store";
+import { DEFAULT_SETTINGS, withVisitorData } from "@/lib/store";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
+import { AccountBackup } from "@/lib/auth/backup";
+import { AccountError, loadAccount, saveAccount, type Account } from "@/lib/auth/server";
 
 /**
  * The one door into the hosted website's server.
  *
- * A visitor's browser holds all of their data. Each call arrives as an
- * envelope: which API route to run, plus the slices of that visitor's data the
- * route needs. The ordinary route handler runs against that copy, and the reply
- * carries its result along with whatever it changed, for the browser to save.
- * The server remembers nothing between calls.
+ * With Supabase connected, each call is authenticated and runs against that
+ * user's encrypted account row. Until connected, the legacy browser-storage
+ * envelope is still supported. Both use the same existing route handlers.
  */
 
 type Handler = (request: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>;
@@ -31,7 +32,7 @@ const ROUTES: { pattern: RegExp; handlers: Partial<Record<string, Handler>> }[] 
   { pattern: /^\/api\/resume$/, handlers: { POST: h(resume.POST) } },
   { pattern: /^\/api\/jobs\/search$/, handlers: { GET: h(jobSearch.GET) } },
   { pattern: /^\/api\/jobs\/import$/, handlers: { POST: h(jobImport.POST) } },
-  { pattern: /^\/api\/applications$/, handlers: { POST: h(applications.POST) } },
+  { pattern: /^\/api\/applications$/, handlers: { GET: h(applications.GET), POST: h(applications.POST) } },
   { pattern: /^\/api\/applications\/([^/]+)$/, handlers: { GET: h(application.GET), PATCH: h(application.PATCH), DELETE: h(application.DELETE) } },
   { pattern: /^\/api\/applications\/([^/]+)\/generate$/, handlers: { POST: h(generate.POST) } },
   { pattern: /^\/api\/settings$/, handlers: { GET: h(settings.GET), PUT: h(settings.PUT) } },
@@ -47,7 +48,7 @@ const Envelope = z.object({
     profile: z.record(z.string(), z.unknown()).optional(),
     settings: z.record(z.string(), z.unknown()).optional(),
     applications: z.array(z.record(z.string(), z.unknown())).max(5000).optional(),
-  }),
+  }).default({}),
 });
 
 // ---- A light brake on abuse ---------------------------------------------------
@@ -68,11 +69,13 @@ function tooMany(request: Request): boolean {
   return recent.length > MAX_CALLS;
 }
 
-const reply = (status: number, data: unknown, state: Record<string, unknown> = {}) => NextResponse.json({ status, data, state });
+const reply = (status: number, data: unknown, state: Record<string, unknown> = {}) => NextResponse.json({ status, data, state }, { headers: { "Cache-Control": "private, no-store" } });
 
-export async function POST(request: Request) {
+async function handle(request: Request) {
   if (!HOSTED) return NextResponse.json({ error: "Not found." }, { status: 404 });
   if (tooMany(request)) return reply(429, { error: "Too many requests from your connection. Wait a few minutes and try again." });
+  // Verify before reading a file or accepting any user data. Anonymous calls cannot use accounts.
+  const account = ACCOUNTS_ENABLED ? await loadAccount(request) : null;
 
   // An upload arrives as a form (the file plus the envelope); everything else as JSON.
   let raw: unknown;
@@ -92,6 +95,8 @@ export async function POST(request: Request) {
   const parsed = Envelope.safeParse(raw);
   if (!parsed.success) return reply(400, { error: "The request was malformed." });
   const { path, method, json, state } = parsed.data;
+
+  if (account && path.startsWith("/api/account/")) return accountAction(account, path, method, json);
 
   const url = new URL(path, "http://jobapply.internal");
   let handler: Handler | undefined;
@@ -120,9 +125,45 @@ export async function POST(request: Request) {
   }
 
   const run = handler;
-  const { result, changed } = await withVisitorData(state, async () => {
+  // In account mode all data is loaded from the authenticated user's row. Client-supplied state is ignored.
+  const { result, changed } = await withVisitorData(account?.state ?? state, async () => {
     const res = await run(inner, { params: Promise.resolve(params) });
     return { status: res.status, data: (await res.json().catch(() => null)) as unknown };
   });
+  if (account) {
+    if (Object.keys(changed).length) await saveAccount(account, { ...account.state, ...changed });
+    // Settings contain provider keys. They stay encrypted in the database and never return in the response state.
+    return reply(result.status, result.data);
+  }
   return reply(result.status, result.data, changed);
+}
+
+async function accountAction(account: Account, path: string, method: string, json: unknown) {
+  if (path === "/api/account/export" && method === "GET") {
+    const settings = { ...DEFAULT_SETTINGS, ...(account.state.settings as object) };
+    // Backups exclude credentials by default; the user can reconnect providers after restoring.
+    settings.aiKeys = {};
+    settings.sourceConfig = {};
+    return reply(200, { app: "JobApply", version: 1, savedAt: new Date().toISOString(), profile: account.state.profile ?? {}, applications: account.state.applications ?? [], settings });
+  }
+  if (path === "/api/account/import" && method === "POST") {
+    const parsed = AccountBackup.safeParse(json);
+    if (!parsed.success) return reply(400, { error: "That backup contains invalid or unsupported JobApply data." });
+    await saveAccount(account, { profile: parsed.data.profile, settings: { ...DEFAULT_SETTINGS, ...parsed.data.settings, usage: [] }, applications: parsed.data.applications });
+    return reply(200, { ok: true });
+  }
+  if (path === "/api/account/erase" && method === "DELETE") {
+    await saveAccount(account, {});
+    return reply(200, { ok: true });
+  }
+  return reply(404, { error: "That action isn't available." });
+}
+
+export async function POST(request: Request) {
+  try { return await handle(request); }
+  catch (error) {
+    if (error instanceof AccountError) return reply(error.status, { error: error.message });
+    // Do not log account state, tokens, credentials or database responses.
+    return reply(503, { error: "Your account could not be loaded or saved. Please try again. If it keeps happening, contact the app owner." });
+  }
 }

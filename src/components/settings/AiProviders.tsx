@@ -152,7 +152,7 @@ function ProviderRow({ info, state, active, save, saving, onSettings }: { info: 
                         {info.keysSite}
                         <ExternalLink className="size-3" aria-hidden />
                       </a>
-                      . It is stored only in the data folder on this computer.
+                      . Your saved settings keep this key private.
                     </>
                   )
                 }

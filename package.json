@@ -8,10 +8,12 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "tsx --test tests/accounts.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
+    "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^1.73.0",
     "mammoth": "^1.13.0",
     "next": "16.4.6",
@@ -21,6 +23,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -28,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

@@ -8,8 +8,9 @@ import { useToast } from "@/components/Toast";
 import { Button, Card, Field, Input, Notice, PageHeader, Select, Spinner } from "@/components/ui";
 import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { api, usd, useData } from "@/lib/client";
-import { eraseData, exportData, importData } from "@/lib/hosted";
+import { eraseData, exportData, importData, importBrowserData } from "@/lib/hosted";
 import { HOSTED } from "@/lib/mode";
+import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
 import type { PublicSettings, WatchlistEntry } from "@/lib/types";
 
 const SECTIONS = [
@@ -61,18 +62,20 @@ export default function SettingsPage() {
   }
 
   async function downloadBackup() {
+    try {
     const url = URL.createObjectURL(new Blob([await exportData()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
     link.download = `jobapply-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
+    } catch (err) { toast((err as Error).message, "danger"); }
   }
 
   async function restoreBackup(file: File | undefined) {
     if (!file) return;
     try {
-      if (!window.confirm("Replace everything in this browser with the contents of that backup?")) return;
+      if (!window.confirm(ACCOUNTS_ENABLED ? "Replace the data in your signed-in account with this backup?" : "Replace everything in this browser with the contents of that backup?")) return;
       await importData(await file.text());
       window.location.reload();
     } catch (err) {
@@ -83,9 +86,15 @@ export default function SettingsPage() {
   }
 
   async function eraseEverything() {
-    if (!window.confirm("Erase your profile, applications and keys from this browser? This can't be undone.")) return;
-    await eraseData();
-    window.location.reload();
+    if (!window.confirm(ACCOUNTS_ENABLED ? "Erase your saved account data, including your profile, applications and provider keys? Your sign-in remains. This can't be undone." : "Erase your profile, applications and keys from this browser? This can't be undone.")) return;
+    try { await eraseData(); window.location.reload(); }
+    catch (err) { toast((err as Error).message, "danger"); }
+  }
+
+  async function migrateBrowserData() {
+    if (!window.confirm("Import the older information saved in this browser into your signed-in account? Only continue if it belongs to you. This replaces your current account data.")) return;
+    try { await importBrowserData(); window.location.reload(); }
+    catch (err) { toast((err as Error).message, "danger"); }
   }
 
   const active = PROVIDER_BY_ID[s.aiProvider];
@@ -279,7 +288,7 @@ export default function SettingsPage() {
             <Section
               id="data"
               title="Your data"
-              hint="Your resume, profile, applications and keys are saved in this browser, on this device. There is no account and nothing is kept on a server: each request sends what it needs, and the server forgets it afterwards. Clearing your browser data, or using another browser or device, starts you from empty, so keep a backup."
+              hint={ACCOUNTS_ENABLED ? "Your profile, resume text, applications and settings are saved privately to your account. Sign in on any device to access them. Account data is encrypted before being stored. Backups let you keep your own copy." : "Your resume, profile, applications and keys are saved in this browser, on this device. There is no account and nothing is kept on a server: each request sends what it needs, and the server forgets it afterwards. Clearing your browser data, or using another browser or device, starts you from empty, so keep a backup."}
             >
               <div className="flex flex-wrap gap-2">
                 <Button variant="primary" onClick={() => void downloadBackup()}>
@@ -287,13 +296,13 @@ export default function SettingsPage() {
                 </Button>
                 <input ref={restoreInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Backup file" onChange={(e) => void restoreBackup(e.target.files?.[0])} />
                 <Button onClick={() => restoreInput.current?.click()}>Restore from a backup</Button>
+                {ACCOUNTS_ENABLED && <Button onClick={() => void migrateBrowserData()}>Import older browser data</Button>}
                 <Button variant="danger" onClick={() => void eraseEverything()}>
-                  Erase everything
+                  {ACCOUNTS_ENABLED ? "Erase account data" : "Erase everything"}
                 </Button>
               </div>
               <p className="text-xs text-muted">
-                The backup file contains your resume and any API keys you entered, so keep it somewhere private. Restoring it on another
-                device moves everything across. Searches send your search words to the job sources that are switched on, and when an AI
+                {ACCOUNTS_ENABLED ? "Account backups contain your resume and applications, but exclude provider credentials. Reconnect providers after restoring. " : "The backup file contains your resume and any API keys you entered, so keep it somewhere private. Restoring it on another device moves everything across. "}Searches send your search words to the job sources that are switched on, and when an AI
                 model is in use your profile and the job description are sent to it.
               </p>
             </Section>
