@@ -21,6 +21,19 @@ Under Authentication:
 
 Passwords are handled by Supabase Auth. The application never stores them in account data.
 
+### Free email sender example: Brevo
+
+Brevo's Free plan includes 300 messages per day. Finish its account and phone verification, then verify a sender under Settings → Senders, domains, IPs. Under SMTP & API, create a key for JobApply. Connect it in Supabase → Authentication → Emails → SMTP Settings:
+
+- Host: `smtp-relay.brevo.com`; port: `587`.
+- Username: the technical SMTP login shown by Brevo (not the sender address).
+- Password: the SMTP key (not the Brevo account password).
+- Sender: your verified sender address; display name: JobApply.
+
+Free email addresses may be rewritten to a Brevo sending domain. Check a received confirmation email before inviting people. Brevo keys can expire; note the expiration shown in its dashboard, and remember that inactivity can also expire them. Renew the key and update Supabase if sending later stops. Keep Brevo and Supabase on their Free plans unless you explicitly decide to upgrade.
+
+Official references: [Free plan](https://help.brevo.com/hc/en-us/articles/208589409-About-Brevo-s-pricing-plans), [SMTP troubleshooting](https://help.brevo.com/hc/en-us/articles/115000188150-Troubleshooting-Issues-with-Brevo-SMTP).
+
 ## 3. Connect Vercel
 
 Alternatively, public sign-in can use GitHub or Google without an SMTP sender. Configure that provider in Supabase, register its OAuth application with the provider, and enter its client ID/secret there. Then set `NEXT_PUBLIC_AUTH_OAUTH_PROVIDER` to `github` or `google` in Vercel. Set `NEXT_PUBLIC_AUTH_EMAIL_ENABLED=0` until an email sender is available, so users aren't offered an email flow that cannot deliver. These values control displayed options only; Supabase's provider configuration controls actual authentication. OAuth uses the same `/auth/callback` app URL.
