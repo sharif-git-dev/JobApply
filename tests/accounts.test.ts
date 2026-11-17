@@ -71,6 +71,7 @@ test("backup import rejects malformed applications and strips endpoint overrides
 
 test("server validates identity remotely and never accepts a browser's user id", async () => {
   process.env.NEXT_PUBLIC_HOSTED = "1";
+  process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = "1";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://accounts.example.test";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "public-test-key";
   process.env.JOBAPPLY_ACCOUNT_ENCRYPTION_KEY = randomBytes(32).toString("hex");

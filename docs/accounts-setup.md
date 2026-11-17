@@ -1,6 +1,6 @@
 # Connect JobApply accounts
 
-Accounts use Supabase Auth and PostgreSQL on the Free plan. This is a one-time setup for the app owner. Visitors then create their own JobApply accounts. The existing live app continues in browser-storage mode until the two public Supabase environment variables are supplied at build time.
+Accounts use Supabase Auth and PostgreSQL on the Free plan. This is a one-time setup for the app owner. Visitors then create their own JobApply accounts. The existing live app continues in browser-storage mode until the public Supabase variables and the explicit activation flag are supplied at build time.
 
 ## 1. Create the backend
 
@@ -32,6 +32,7 @@ In Vercel → job-apply → Settings → Environment Variables, set these for Pr
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL from Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project publishable key |
 | `JOBAPPLY_ACCOUNT_ENCRYPTION_KEY` | A new random 32-byte key, encoded as 64 hexadecimal characters |
+| `NEXT_PUBLIC_ACCOUNTS_ENABLED` | `1`, set only after the database and authentication email sender are ready |
 
 Generate the encryption key on your own computer, for example `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Save it in Vercel as a server-only sensitive value and keep a private recovery copy. Do not commit it or expose it as a `NEXT_PUBLIC_` variable. Changing or losing this key makes existing account data unreadable; changing it requires an explicit migration.
 

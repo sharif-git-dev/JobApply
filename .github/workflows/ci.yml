@@ -21,5 +21,6 @@ jobs:
       - run: npm run build
         env:
           JOBAPPLY_HOSTED: "1"
+          NEXT_PUBLIC_ACCOUNTS_ENABLED: "1"
           NEXT_PUBLIC_SUPABASE_URL: "https://accounts.example.test"
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "public-build-test-key"
