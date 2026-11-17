@@ -23,6 +23,8 @@ Passwords are handled by Supabase Auth. The application never stores them in acc
 
 ## 3. Connect Vercel
 
+Alternatively, public sign-in can use GitHub or Google without an SMTP sender. Configure that provider in Supabase, register its OAuth application with the provider, and enter its client ID/secret there. Then set `NEXT_PUBLIC_AUTH_OAUTH_PROVIDER` to `github` or `google` in Vercel. Set `NEXT_PUBLIC_AUTH_EMAIL_ENABLED=0` until an email sender is available, so users aren't offered an email flow that cannot deliver. These values control displayed options only; Supabase's provider configuration controls actual authentication. OAuth uses the same `/auth/callback` app URL.
+
 In Vercel → job-apply → Settings → Environment Variables, set these for Production:
 
 | Variable | Value |

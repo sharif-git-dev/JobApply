@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth/browser";
-import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
+import { ACCOUNTS_ENABLED, EMAIL_AUTH_ENABLED, OAUTH_PROVIDER } from "@/lib/auth/config";
 import { Button, Card, Field, Input, Notice } from "@/components/ui";
 
 type Mode = "signin" | "signup" | "reset";
@@ -49,6 +49,17 @@ export default function LoginPage() {
         <p className="mb-5 mt-2 text-sm text-muted">Your profile and applications, saved privately and available on your devices.</p>
         {!ACCOUNTS_ENABLED ? <Notice>Account setup is being connected. <Link className="underline" href="/">Return to JobApply</Link>.</Notice> : (
           <>
+            {OAUTH_PROVIDER && <Button className="mb-4 w-full" variant="primary" loading={busy} onClick={async () => {
+              const provider = OAUTH_PROVIDER;
+              if (!provider) return;
+              setBusy(true); setError("");
+              try {
+                const { error } = await authClient().auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback` } });
+                if (error) throw error;
+              } catch (err) { setError(err instanceof Error ? err.message : "Could not open sign-in."); setBusy(false); }
+            }}>Continue with {OAUTH_PROVIDER === "github" ? "GitHub" : "Google"}</Button>}
+            {!EMAIL_AUTH_ENABLED && error && <Notice tone="danger">{error}</Notice>}
+            {EMAIL_AUTH_ENABLED && <>
             <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
               <Field label="Email"><Input type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
               {mode !== "reset" && <Field label="Password" hint={mode === "signup" ? "Use at least 12 characters." : undefined}><Input type="password" required minLength={mode === "signup" ? 12 : 1} maxLength={256} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} /></Field>}
@@ -60,6 +71,8 @@ export default function LoginPage() {
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}>{mode === "signin" ? "Create an account" : "Back to sign in"}</Button>
               {mode === "signin" && <Button size="sm" variant="ghost" disabled={busy} onClick={() => changeMode("reset")}>Forgot password?</Button>}
             </div>
+            </>}
+            {!EMAIL_AUTH_ENABLED && !OAUTH_PROVIDER && <Notice>Sign-in is being configured. Please try again shortly.</Notice>}
           </>
         )}
       </Card>
