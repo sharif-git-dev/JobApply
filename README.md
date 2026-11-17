@@ -2,7 +2,7 @@
 
 Give it your resume once. JobApply finds jobs that fit, tailors each application to the posting, fills in the forms, and keeps track of where every application stands.
 
-It runs entirely on your own computer. There is no account to create and nothing to pay for: the core features work with no API keys at all.
+There is no account to create and nothing to pay for: the core features work with no API keys at all. Run it privately on your own computer, or put it online as a website other people can use, each with their own data.
 
 ## What it does
 
@@ -51,6 +51,35 @@ Then open <http://localhost:3000>.
 1. **Profile** — upload your resume and check what was read from it.
 2. **Find jobs** — search, then press *Tailor my application* on anything promising.
 3. **Applications** — write the materials, open the application, mark it applied.
+
+## Putting it online for other people
+
+The same code can run as a public website. Built that way, it stores nothing on the server: each visitor's resume, applications and keys are kept in their own browser and sent along only when a request needs them. There are no accounts and no database, so there is nothing of anyone else's for you to look after.
+
+**Deploy to Vercel (free plan)**
+
+1. Sign in at [vercel.com](https://vercel.com) with GitHub.
+2. Choose **Add New → Project**, pick this repository, and press **Deploy**. No settings or environment variables are needed; building on Vercel switches website mode on by itself.
+3. Share the `.vercel.app` address it gives you.
+
+Every push to `main` redeploys it. Vercel's free plan pauses a project that goes over its limits instead of charging.
+
+**What is different on the website**
+
+| | On your computer | As a website |
+| --- | --- | --- |
+| Where data lives | The `data` folder | Each visitor's browser, with backup and restore in Settings |
+| AI models | Free hosted, local (Ollama, LM Studio), paid, custom | Free hosted and paid only, each visitor using their own key |
+| Form-filling extension | Yes | No |
+| Who can reach it | Only this computer | Anyone with the link |
+
+Local models and custom addresses are left out on the website because a server can't reach a model on a visitor's machine, and letting it call any address a visitor types would make it an open relay. Job searches and link imports run on the server, which keeps a short shared cache of job-board results and limits how fast one visitor can call it.
+
+To try website mode on your own machine before deploying:
+
+```bash
+npm run dev:hosted
+```
 
 ## AI models
 
@@ -110,10 +139,14 @@ To see it work without a real application, open <http://localhost:3000/autofill-
 
 ## Privacy
 
+On your own computer:
+
 - Your resume, profile, applications, and keys are plain JSON files in `data/`. That folder is git-ignored and never leaves your machine.
 - The server only accepts connections from this computer, and rejects requests coming from other websites open in your browser.
 - Job searches send your search terms to the job sources that are switched on. Importing a link fetches that page.
 - When an AI model is in use, your profile and the job description are sent to that provider to generate the text. Nothing is sent otherwise, and a model on your own computer (Ollama, LM Studio) keeps even that local.
+
+As a website, a visitor's data is kept in their browser, not on the server. Each request carries the parts of it that request needs; the server uses them to answer and keeps no copy. Keys in the server's own environment are never used on a visitor's behalf.
 
 ## What it deliberately doesn't do
 
@@ -144,7 +177,10 @@ src/lib/resume/       resume text extraction and the key-free parser
 src/lib/ai/           provider catalog, clients (budget guard, usage tracking), prompts
 src/lib/match.ts      keyword match scoring
 src/lib/templates.ts  key-free cover letter, fit and resume fallbacks
-src/proxy.ts          localhost-only request guard
+src/lib/mode.ts       local vs website mode
+src/lib/hosted.ts     website mode: browser storage and the request envelope
+src/app/api/hosted/   website mode: the single stateless gateway
+src/proxy.ts          request guard (localhost-only locally, gateway-only on the website)
 extension/            the autofill browser extension
 data/                 your data (created on first run, git-ignored)
 ```

@@ -4,6 +4,7 @@ import { ArrowRight, Check, FileUp, KeyRound, Search } from "lucide-react";
 import Link from "next/link";
 import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { timeAgo, useData } from "@/lib/client";
+import { HOSTED } from "@/lib/mode";
 import { STATUSES, type Application, type Profile, type PublicSettings } from "@/lib/types";
 import { Card, Notice, PageHeader, ScoreRing, Spinner, buttonClass, cx } from "@/components/ui";
 
@@ -53,7 +54,9 @@ export default function Home() {
       title: "Turn on AI writing (optional)",
       body: s.aiReady
         ? `Using ${PROVIDER_BY_ID[s.aiProvider]?.label ?? "AI"}. Switch providers any time in Settings.`
-        : "Connect a free AI service, a model on your own computer, or a paid one for tailored cover letters and answers. Without it you still get search, matching, and templates.",
+        : HOSTED
+          ? "Connect a free AI service (or a paid one) with your own key for tailored cover letters and answers. Without it you still get search, matching, and templates."
+          : "Connect a free AI service, a model on your own computer, or a paid one for tailored cover letters and answers. Without it you still get search, matching, and templates.",
       href: "/settings",
       cta: s.aiReady ? "Settings" : "Set up AI",
     },
@@ -66,6 +69,17 @@ export default function Home() {
         title={firstName ? `Welcome back, ${firstName}` : "Welcome to JobApply"}
         lede="Give it your resume once. It finds matching jobs, tailors each application, and keeps track of where you stand."
       />
+
+      {HOSTED && (
+        <Notice className="mb-4">
+          Everything you enter is saved in this browser only. There is no account, and nothing is stored on a server. Back it up or move it
+          to another device from{" "}
+          <Link href="/settings#data" className="font-medium text-accent hover:underline">
+            Settings → Your data
+          </Link>
+          .
+        </Notice>
+      )}
 
       <div className="grid gap-3 md:grid-cols-3">
         {steps.map((step, i) => (

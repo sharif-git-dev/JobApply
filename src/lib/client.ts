@@ -1,9 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { hostedApi } from "./hosted";
+import { HOSTED } from "./mode";
 
 /** fetch() for our own API: JSON in, JSON out, server error messages surfaced as Error. */
 export async function api<T>(path: string, init?: { method?: string; json?: unknown; form?: FormData }): Promise<T> {
+  // On the public website the data lives in this browser and travels with each call.
+  if (HOSTED) return hostedApi<T>(path, init);
   const res = await fetch(path, {
     method: init?.method ?? (init?.json !== undefined || init?.form ? "POST" : "GET"),
     headers: init?.json !== undefined ? { "Content-Type": "application/json" } : undefined,

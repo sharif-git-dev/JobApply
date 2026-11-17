@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "jobapply-hosted",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:hosted"],
+      "port": 3000
     }
   ]
 }

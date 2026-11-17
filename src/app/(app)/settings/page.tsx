@@ -1,13 +1,15 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { AiProviders } from "@/components/settings/AiProviders";
 import { JobSources } from "@/components/settings/JobSources";
 import { useToast } from "@/components/Toast";
 import { Button, Card, Field, Input, Notice, PageHeader, Select, Spinner } from "@/components/ui";
 import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { api, usd, useData } from "@/lib/client";
+import { eraseData, exportData, importData } from "@/lib/hosted";
+import { HOSTED } from "@/lib/mode";
 import type { PublicSettings, WatchlistEntry } from "@/lib/types";
 
 const SECTIONS = [
@@ -15,7 +17,8 @@ const SECTIONS = [
   { id: "spending", label: "Spending cap" },
   { id: "sources", label: "Job sources" },
   { id: "watchlist", label: "Company watchlist" },
-  { id: "extension", label: "Form filler" },
+  // The form filler reads from an app running on the visitor's own computer, which the website isn't.
+  ...(HOSTED ? [] : [{ id: "extension", label: "Form filler" }]),
   { id: "data", label: "Your data" },
 ];
 
@@ -37,6 +40,7 @@ export default function SettingsPage() {
   const [budget, setBudget] = useState<string | null>(null);
   const [company, setCompany] = useState<WatchlistEntry>({ ats: "greenhouse", slug: "" });
   const [saving, setSaving] = useState("");
+  const restoreInput = useRef<HTMLInputElement>(null);
 
   if (loading) return <Spinner />;
   if (error || !data) return <Notice tone="danger">{error || "Couldn't load settings."}</Notice>;
@@ -54,6 +58,34 @@ export default function SettingsPage() {
     } finally {
       setSaving("");
     }
+  }
+
+  async function downloadBackup() {
+    const url = URL.createObjectURL(new Blob([await exportData()], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `jobapply-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function restoreBackup(file: File | undefined) {
+    if (!file) return;
+    try {
+      if (!window.confirm("Replace everything in this browser with the contents of that backup?")) return;
+      await importData(await file.text());
+      window.location.reload();
+    } catch (err) {
+      toast((err as Error).message, "danger");
+    } finally {
+      if (restoreInput.current) restoreInput.current.value = "";
+    }
+  }
+
+  async function eraseEverything() {
+    if (!window.confirm("Erase your profile, applications and keys from this browser? This can't be undone.")) return;
+    await eraseData();
+    window.location.reload();
   }
 
   const active = PROVIDER_BY_ID[s.aiProvider];
@@ -222,6 +254,7 @@ export default function SettingsPage() {
             </form>
           </Section>
 
+          {!HOSTED && (
           <Section
             id="extension"
             title="Form-filling browser extension"
@@ -240,7 +273,31 @@ export default function SettingsPage() {
             </ol>
             <p className="text-xs text-muted">Keep JobApply running while you use it. The extension reads your profile from this app.</p>
           </Section>
+          )}
 
+          {HOSTED ? (
+            <Section
+              id="data"
+              title="Your data"
+              hint="Your resume, profile, applications and keys are saved in this browser, on this device. There is no account and nothing is kept on a server: each request sends what it needs, and the server forgets it afterwards. Clearing your browser data, or using another browser or device, starts you from empty, so keep a backup."
+            >
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" onClick={() => void downloadBackup()}>
+                  Download a backup
+                </Button>
+                <input ref={restoreInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Backup file" onChange={(e) => void restoreBackup(e.target.files?.[0])} />
+                <Button onClick={() => restoreInput.current?.click()}>Restore from a backup</Button>
+                <Button variant="danger" onClick={() => void eraseEverything()}>
+                  Erase everything
+                </Button>
+              </div>
+              <p className="text-xs text-muted">
+                The backup file contains your resume and any API keys you entered, so keep it somewhere private. Restoring it on another
+                device moves everything across. Searches send your search words to the job sources that are switched on, and when an AI
+                model is in use your profile and the job description are sent to it.
+              </p>
+            </Section>
+          ) : (
           <Section id="data" title="Your data">
             <p className="text-sm text-muted">
               Your resume, profile, applications and keys are plain files in the <span className="font-mono">data</span> folder of the project.
@@ -249,6 +306,7 @@ export default function SettingsPage() {
               keeps even that local. Back up the folder to keep your history; delete it to start over.
             </p>
           </Section>
+          )}
         </div>
       </div>
     </>

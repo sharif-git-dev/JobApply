@@ -5,6 +5,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { useToast } from "@/components/Toast";
 import { Button, Card, Field, Input, Notice, PageHeader, Select, Spinner, TagInput, Textarea, cx } from "@/components/ui";
 import { api, timeAgo, useData } from "@/lib/client";
+import { HOSTED } from "@/lib/mode";
 import type { EducationItem, ExperienceItem, Profile } from "@/lib/types";
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
@@ -118,7 +119,9 @@ export default function ProfilePage() {
               <div className="text-sm text-muted">
                 {p.resumeFileName
                   ? `Uploaded ${timeAgo(p.resumeUpdatedAt)}. Upload a newer version any time — your preferences below are kept.`
-                  : "Drop a PDF or Word file here, or choose one. It never leaves this computer unless you turn on AI."}
+                  : HOSTED
+                    ? "Drop a PDF or Word file here, or choose one. It is sent to this site only to be read, and is not kept there."
+                    : "Drop a PDF or Word file here, or choose one. It never leaves this computer unless you turn on AI."}
               </div>
             </div>
             <input

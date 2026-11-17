@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { getSettings, saveSettings } from "../store";
+import { HOSTED } from "../mode";
 import type { PublicProvider, Settings } from "../types";
 import { DEFAULT_PROVIDER, PROVIDERS, PROVIDER_BY_ID, priceFor, type ModelPrice, type ProviderInfo } from "./providers";
 
@@ -32,9 +33,12 @@ export interface Resolved {
 export function resolve(settings: Settings, providerId = settings.aiProvider): Resolved {
   const provider = PROVIDER_BY_ID[providerId] ?? PROVIDER_BY_ID[DEFAULT_PROVIDER];
   const saved = settings.aiKeys[provider.id] ?? "";
-  const env = provider.env ? (process.env[provider.env] ?? "") : "";
+  // On the public website every visitor brings their own key; a key in the server's environment must never be spent on their behalf.
+  const env = !HOSTED && provider.env ? (process.env[provider.env] ?? "") : "";
   const model = (settings.aiModels[provider.id] || provider.defaultModel).trim();
-  const baseUrl = ((provider.baseUrlEditable && settings.aiBaseUrls[provider.id]) || provider.baseUrl).trim().replace(/\/+$/, "");
+  // Address overrides exist for local and custom providers only, which the website doesn't offer.
+  const override = !HOSTED && provider.baseUrlEditable ? settings.aiBaseUrls[provider.id] : "";
+  const baseUrl = (override || provider.baseUrl).trim().replace(/\/+$/, "");
   return { provider, key: saved || env, keyFromEnv: !saved && Boolean(env), model, baseUrl, price: priceFor(provider, model) };
 }
 

@@ -211,7 +211,7 @@ function ProviderRow({ info, state, active, save, saving, onSettings }: { info: 
 export function AiProviders({ settings, save, saving, onSettings }: Props) {
   return (
     <div className="flex flex-col gap-6">
-      {GROUPS.map(({ tier, blurb }) => (
+      {GROUPS.filter(({ tier }) => PROVIDERS.some((p) => p.tier === tier)).map(({ tier, blurb }) => (
         <div key={tier}>
           <h3 className="text-sm font-semibold">{TIER_LABEL[tier]}</h3>
           <p className="mb-3 text-sm text-muted">{blurb}</p>

@@ -7,6 +7,8 @@
  * is why Settings can also load the current model list straight from a provider.
  */
 
+import { HOSTED } from "../mode";
+
 export type Tier = "free" | "local" | "paid" | "custom";
 
 export const TIER_LABEL: Record<Tier, string> = {
@@ -51,7 +53,7 @@ export interface ProviderInfo {
   maxTokensParam: "max_tokens" | "max_completion_tokens";
 }
 
-export const PROVIDERS: ProviderInfo[] = [
+const ALL_PROVIDERS: ProviderInfo[] = [
   // ---- Free hosted ------------------------------------------------------------
   {
     id: "gemini",
@@ -210,10 +212,17 @@ export const PROVIDERS: ProviderInfo[] = [
   },
 ];
 
+/**
+ * The public website can only offer hosted services. A model on a visitor's own
+ * computer can't be reached from a server, and letting the server call any
+ * address a visitor types would turn it into an open relay.
+ */
+export const PROVIDERS: ProviderInfo[] = HOSTED ? ALL_PROVIDERS.filter((p) => p.tier === "free" || p.tier === "paid") : ALL_PROVIDERS;
+
 export const PROVIDER_BY_ID: Record<string, ProviderInfo> = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
 
-/** Chosen by the user. */
-export const DEFAULT_PROVIDER = "deepseek";
+/** Locally: the owner's choice. On the website: a free one, so newcomers aren't pointed at a paid service. */
+export const DEFAULT_PROVIDER = HOSTED ? "gemini" : "deepseek";
 
 /**
  * What a model costs, if the provider charges and we know its rates. An
