@@ -15,7 +15,26 @@ It runs entirely on your own computer. There is no account to create and nothing
 
 ## Getting started
 
-You need [Node.js](https://nodejs.org) 20.9 or newer.
+JobApply runs on your own computer, so your resume stays with you. You need [Node.js](https://nodejs.org) 20.9 or newer (the "LTS" download is fine).
+
+**The easy way**
+
+1. On this page, click the green **Code** button, then **Download ZIP**, and unzip it.
+2. Start it:
+   - **Windows:** double-click `JobApply.bat`.
+   - **macOS or Linux:** open a terminal in the folder and run `sh jobapply.sh`.
+
+The first start installs what it needs, which takes a minute, then opens <http://localhost:3000> in your browser. Keep the window that appears open while you use the app; close it to stop.
+
+**With git**
+
+```bash
+git clone https://github.com/sharif-git-dev/JobApply.git
+```
+
+```bash
+cd JobApply
+```
 
 ```bash
 npm install
@@ -25,7 +44,9 @@ npm install
 npm run dev
 ```
 
-Then open <http://localhost:3000>. On Windows you can double-click `JobApply.bat` instead, which does both steps and opens the browser.
+Then open <http://localhost:3000>.
+
+**First steps in the app**
 
 1. **Profile** — upload your resume and check what was read from it.
 2. **Find jobs** — search, then press *Tailor my application* on anything promising.
@@ -127,3 +148,7 @@ src/proxy.ts          localhost-only request guard
 extension/            the autofill browser extension
 data/                 your data (created on first run, git-ignored)
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
