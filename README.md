@@ -4,6 +4,8 @@ Give it your resume once. JobApply finds jobs that fit, tailors each application
 
 **Try it now: <https://job-apply-three.vercel.app>** — also installable as an app.
 
+The shared app now uses email/password accounts. Create an account, confirm your email, and sign in to keep your profile and applications available across your devices. To bring in information from the older browser-only version, use Settings → Your data → Import older browser data after signing in.
+
 The core features work with no AI keys. Run it privately on your own computer, or share a hosted app with private user accounts once Supabase is connected. Until connected, the hosted app keeps each visitor's data in their own browser.
 
 ## What it does
@@ -62,7 +64,7 @@ Then open <http://localhost:3000>.
 
 The same code can run as a public website or installed app. Connect Supabase for email/password sign-up, sign-in, recovery and private encrypted account data that is available across devices. [Account setup instructions](docs/accounts-setup.md) cover the free project, database migration, email sender and Vercel environment variables. Users can explicitly import their older browser information from Settings; it is never assigned to an account automatically.
 
-Until that connection is configured, the existing browser-storage mode keeps working. Account functionality is implemented but requires a real Supabase project and end-to-end signup testing before activation.
+The shared deployment has its database and email sender connected, and signup, email confirmation, sign-in and profile persistence have been verified. For a new deployment, browser-storage mode remains available until its own account connection is configured and explicitly activated. Follow the setup guide and test that deployment before inviting users.
 
 **Deploy to Vercel (free plan)**
 
