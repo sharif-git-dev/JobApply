@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { HOSTED } from "@/lib/mode";
 import { ToastProvider } from "./Toast";
+import { InstallApp } from "./InstallApp";
 import { cx } from "./ui";
 
 const NAV = [
@@ -50,7 +51,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <p className="mt-auto px-3 text-xs leading-relaxed text-muted">{HOSTED ? "Your resume and applications are kept in this browser, not on a server." : "Your resume and applications stay on this computer."}</p>
         </aside>
 
-        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-12 md:pt-9">{children}</main>
+        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-12 md:pt-9"><InstallApp />{children}</main>
 
         {/* Mobile: bottom tab bar */}
         <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface md:hidden" aria-label="Main">

@@ -17,6 +17,10 @@ There is no account to create and nothing to pay for: the core features work wit
 
 ## Getting started
 
+**Install the app without building anything:** open [JobApply](https://job-apply-three.vercel.app/) in Chrome or Edge and choose **Install JobApply** when offered, or use the browser's install menu. It gets an icon and opens in its own window. On iPhone or iPad use Safari → Share → Add to Home Screen; on Mac use Safari → File → Add to Dock. Installation help is also available inside the app.
+
+The installed version requires an internet connection and receives the latest version when reopened or reloaded. Use the browser where you already keep your JobApply information; if your device gives the installed app separate storage, move your information with Settings → Your data → backup and restore. Each person keeps their own information. Installation adds no charge.
+
 JobApply runs on your own computer, so your resume stays with you. You need [Node.js](https://nodejs.org) 20.9 or newer (the "LTS" download is fine).
 
 **The easy way**
