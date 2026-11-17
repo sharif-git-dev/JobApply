@@ -1,7 +1,7 @@
 "use client";
 
 import type { Application } from "./types";
-import { ACCOUNTS_ENABLED } from "./auth/config";
+import { usingAccount } from "./auth/browser";
 import { accountApi } from "./account-client";
 
 /**
@@ -103,7 +103,7 @@ export async function hostedApi<T>(path: string, init?: { method?: string; json?
   // Send in full only the application this call is about; a list of hundreds would be megabytes on every request.
   const focus = pathname.match(/^\/api\/applications\/([^/]+)/)?.[1];
   const sent: Sent[] = applications.map((a) => (a.id === focus ? a : stub(a)));
-  const envelope = JSON.stringify({ path, method, json: init?.json, state: { profile, settings, applications: sent } });
+  const envelope = JSON.stringify({ path, method, json: init?.json, guest: true, state: { profile, settings, applications: sent } });
 
   let body: BodyInit = envelope;
   let headers: Record<string, string> | undefined = { "Content-Type": "application/json" };
@@ -153,7 +153,7 @@ export async function hostedApi<T>(path: string, init?: { method?: string; json?
 // ---- Backup, restore, erase -------------------------------------------------------
 
 export async function exportData(): Promise<string> {
-  if (ACCOUNTS_ENABLED) return JSON.stringify(await accountApi("/api/account/export"), null, 2);
+  if (await usingAccount()) return JSON.stringify(await accountApi("/api/account/export"), null, 2);
   const [profile, settings, applications] = await Promise.all([get("profile"), get("settings"), get("applications")]);
   return JSON.stringify({ app: "JobApply", version: 1, savedAt: new Date().toISOString(), profile, settings, applications: applications ?? [] }, null, 2);
 }
@@ -166,7 +166,7 @@ export async function importData(text: string): Promise<void> {
     throw new Error("That file isn't a JobApply backup.");
   }
   if (backup?.app !== "JobApply" || !Array.isArray(backup.applications)) throw new Error("That file isn't a JobApply backup.");
-  if (ACCOUNTS_ENABLED) {
+  if (await usingAccount()) {
     await accountApi("/api/account/import", { method: "POST", json: backup });
     return;
   }
@@ -176,7 +176,7 @@ export async function importData(text: string): Promise<void> {
 }
 
 export async function eraseData(): Promise<void> {
-  if (ACCOUNTS_ENABLED) {
+  if (await usingAccount()) {
     await accountApi("/api/account/erase", { method: "DELETE" });
     return;
   }

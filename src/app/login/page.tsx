@@ -76,6 +76,7 @@ export default function LoginPage() {
           </>
         )}
       </Card>
+      <Link href="/" className="mt-4 text-center text-sm font-medium text-accent underline">Continue without an account</Link>
     </main>
   );
 }

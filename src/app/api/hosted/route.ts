@@ -19,9 +19,9 @@ import { AccountError, loadAccount, saveAccount, type Account } from "@/lib/auth
 /**
  * The one door into the hosted website's server.
  *
- * With Supabase connected, each call is authenticated and runs against that
- * user's encrypted account row. Until connected, the legacy browser-storage
- * envelope is still supported. Both use the same existing route handlers.
+ * Signed-in calls run against the verified user's encrypted account row.
+ * Explicit guest calls use browser-only state, with no database access.
+ * Both use the same existing route handlers.
  */
 
 type Handler = (request: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>;
@@ -44,6 +44,7 @@ const Envelope = z.object({
   path: z.string().max(2000).startsWith("/api/"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
   json: z.unknown().optional(),
+  guest: z.boolean().default(false),
   state: z.object({
     profile: z.record(z.string(), z.unknown()).optional(),
     settings: z.record(z.string(), z.unknown()).optional(),
@@ -74,8 +75,8 @@ const reply = (status: number, data: unknown, state: Record<string, unknown> = {
 async function handle(request: Request) {
   if (!HOSTED) return NextResponse.json({ error: "Not found." }, { status: 404 });
   if (tooMany(request)) return reply(429, { error: "Too many requests from your connection. Wait a few minutes and try again." });
-  // Verify before reading a file or accepting any user data. Anonymous calls cannot use accounts.
-  const account = ACCOUNTS_ENABLED ? await loadAccount(request) : null;
+  // A supplied token must validate. Never silently turn an invalid account session into a guest request.
+  const account = ACCOUNTS_ENABLED && request.headers.has("authorization") ? await loadAccount(request) : null;
 
   // An upload arrives as a form (the file plus the envelope); everything else as JSON.
   let raw: unknown;
@@ -95,6 +96,11 @@ async function handle(request: Request) {
   const parsed = Envelope.safeParse(raw);
   if (!parsed.success) return reply(400, { error: "The request was malformed." });
   const { path, method, json, state } = parsed.data;
+
+  // Guests opt in to browser-only data. Account export, import and erasure always require sign-in.
+  if (ACCOUNTS_ENABLED && !account && (!parsed.data.guest || path.startsWith("/api/account/"))) {
+    return reply(401, { error: "Please sign in to access your saved account." });
+  }
 
   if (account && path.startsWith("/api/account/")) return accountAction(account, path, method, json);
 

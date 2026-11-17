@@ -12,6 +12,13 @@ export function authClient() {
   return client;
 }
 
+export async function usingAccount(): Promise<boolean> {
+  if (!ACCOUNTS_ENABLED) return false;
+  const { data, error } = await authClient().auth.getSession();
+  if (error) throw new Error("Could not check your sign-in. Reload and try again.");
+  return Boolean(data.session);
+}
+
 export async function accountToken(): Promise<string> {
   const { data, error } = await authClient().auth.getSession();
   if (error || !data.session) {

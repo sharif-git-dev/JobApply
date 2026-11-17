@@ -105,6 +105,31 @@ test("server validates identity remotely and never accepts a browser's user id",
     assert.equal(reply.status, 200);
     assert.equal(reply.data.fullName, "Alice");
     assert.deepEqual(reply.state, {});
+    const authRequests = requests.length;
+    const guest = async (path: string, method = "GET", json?: unknown, state: Record<string, unknown> = {}) => {
+      const res = await POST(new Request("http://app.test/api/hosted", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path, method, json, state, guest: true }) }));
+      return res.json();
+    };
+    const guestProfile = await guest("/api/profile", "PUT", { fullName: "Guest visitor", skills: ["TypeScript"] });
+    assert.equal(guestProfile.status, 200);
+    assert.equal(guestProfile.state.profile.fullName, "Guest visitor");
+    const otherGuest = await guest("/api/profile");
+    assert.equal(otherGuest.data.fullName, "");
+    const savedJob = await guest("/api/jobs/import", "POST", {
+      title: "TypeScript engineer", company: "Guest test", description: "Build web applications with TypeScript and React. Work remotely with our engineering team on reliable APIs and accessible user interfaces.", location: "Remote", url: "",
+    }, guestProfile.state);
+    assert.equal(savedJob.status, 200);
+    assert.equal(savedJob.state.applications.length, 1);
+    const guestState = { ...guestProfile.state, ...savedJob.state };
+    const draft = await guest(`/api/applications/${savedJob.data.application.id}/generate`, "POST", { kind: "cover" }, guestState);
+    assert.equal(draft.status, 200);
+    assert.equal(draft.data.coverLetterSource, "template");
+    for (const path of ["/api/account/export", "/api/account/import", "/api/account/erase"]) {
+      assert.equal((await guest(path, "POST", {})).status, 401);
+    }
+    assert.equal(requests.length, authRequests, "Guest tools must never query a user's database or Supabase identity");
+    const invalidGuestToken = await POST(new Request("http://app.test/api/hosted", { method: "POST", headers: { authorization: "Bearer forged" }, body: JSON.stringify({ ...envelope, guest: true }) }));
+    assert.equal((await invalidGuestToken.json()).status, 401);
     await assert.rejects(saveAccount(account, { profile: {} }), /another tab or device/);
   } finally { globalThis.fetch = originalFetch; }
 });

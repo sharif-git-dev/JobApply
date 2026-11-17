@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PROVIDER_BY_ID } from "@/lib/ai/providers";
 import { timeAgo, useData } from "@/lib/client";
 import { HOSTED } from "@/lib/mode";
-import { ACCOUNTS_ENABLED } from "@/lib/auth/config";
+import { useAccount } from "@/components/AccountGate";
 import { STATUSES, type Application, type Profile, type PublicSettings } from "@/lib/types";
 import { Card, Notice, PageHeader, ScoreRing, Spinner, buttonClass, cx } from "@/components/ui";
 
@@ -18,6 +18,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function Home() {
+  const { signedIn } = useAccount();
   const profile = useData<Profile>("/api/profile");
   const apps = useData<Application[]>("/api/applications");
   const settings = useData<PublicSettings>("/api/settings");
@@ -73,9 +74,7 @@ export default function Home() {
 
       {HOSTED && (
         <Notice className="mb-4">
-          {ACCOUNTS_ENABLED ? "Your profile and applications are saved to your account and available when you sign in on another device. Manage your data in " : <>Everything you enter is saved in this browser only. There is no account, and nothing is stored on a server. Back it up or move it
-          to another device from{" "}
-          </>}
+          {signedIn ? "Your profile and applications are saved to your account and available when you sign in on another device. Manage your data in " : <>You can search jobs, read your resume, and prepare applications without signing in. Guest information is saved in this browser only. <Link href="/login" className="font-medium text-accent underline">Sign in</Link> to keep information across devices, or manage your browser data in </>}
           <Link href="/settings#data" className="font-medium text-accent hover:underline">
             Settings → Your data
           </Link>

@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { hostedApi } from "./hosted";
 import { HOSTED } from "./mode";
-import { ACCOUNTS_ENABLED } from "./auth/config";
+import { usingAccount } from "./auth/browser";
 import { accountApi } from "./account-client";
 
 /** fetch() for our own API: JSON in, JSON out, server error messages surfaced as Error. */
 export async function api<T>(path: string, init?: { method?: string; json?: unknown; form?: FormData }): Promise<T> {
-  if (ACCOUNTS_ENABLED) return accountApi<T>(path, init);
+  if (await usingAccount()) return accountApi<T>(path, init);
   // On the public website the data lives in this browser and travels with each call.
   if (HOSTED) return hostedApi<T>(path, init);
   const res = await fetch(path, {

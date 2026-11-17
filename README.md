@@ -4,7 +4,7 @@ Give it your resume once. JobApply finds jobs that fit, tailors each application
 
 **Try it now: <https://job-apply-three.vercel.app>** — also installable as an app.
 
-The shared app now uses email/password accounts. Create an account, confirm your email, and sign in to keep your profile and applications available across your devices. To bring in information from the older browser-only version, use Settings → Your data → Import older browser data after signing in.
+The home page and basic tools work without signing in: search jobs, upload a resume, compare skills, prepare built-in drafts and track applications in your browser. Optional email/password accounts save your information privately across devices. To bring guest or older browser information into an account, sign in and use Settings → Your data → Import guest or older browser data.
 
 The core features work with no AI keys. Run it privately on your own computer, or share a hosted app with private user accounts once Supabase is connected. Until connected, the hosted app keeps each visitor's data in their own browser.
 
