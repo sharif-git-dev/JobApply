@@ -2,6 +2,8 @@
 
 Give it your resume once. JobApply finds jobs that fit, tailors each application to the posting, fills in the forms, and keeps track of where every application stands.
 
+**Try it now: <https://job-apply-three.vercel.app>** — nothing to install, and everything you enter stays in your own browser.
+
 There is no account to create and nothing to pay for: the core features work with no API keys at all. Run it privately on your own computer, or put it online as a website other people can use, each with their own data.
 
 ## What it does
